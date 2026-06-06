@@ -131,7 +131,7 @@ export default function HomePage() {
             width={120}
             height={120}
             aria-hidden
-            className="h-24 w-auto animate-boltDrop drop-shadow-[0_8px_0_rgba(0,0,0,0.6)]"
+            className="bt-monster h-24 w-auto animate-boltDrop drop-shadow-[0_8px_0_rgba(0,0,0,0.6)]"
           />
           <h2 className="bt-stroke font-display text-2xl font-extrabold text-white sm:text-3xl">
             さあ、あなたもザクザクしよう

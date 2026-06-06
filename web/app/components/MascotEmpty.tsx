@@ -34,7 +34,7 @@ export function MascotEmpty({
         alt=""
         width={size}
         height={size}
-        className="animate-boltDrop drop-shadow-[0_8px_0_rgba(0,0,0,0.6)]"
+        className="bt-monster animate-boltDrop drop-shadow-[0_8px_0_rgba(0,0,0,0.6)]"
         priority={false}
       />
       <p className="font-display text-xl font-extrabold text-thunder-white sm:text-2xl">

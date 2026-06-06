@@ -25,11 +25,15 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
+// Score milestones worth an extra-celebratory burst when first crossed.
+const MILESTONE_STEP = 100;
+
 export function LeaderboardRow({ user, rank, highlight = false }: LeaderboardRowProps) {
   const isTop3 = rank <= 3;
   const [burst, setBurst] = useState(0);
   const [pop, setPop] = useState(false);
   const [rankMove, setRankMove] = useState<"up" | "down" | null>(null);
+  const [milestone, setMilestone] = useState<string | null>(null);
 
   const prevRef = useRef<{ score: number; count: number }>({
     score: user.zakuzakuScore,
@@ -55,7 +59,19 @@ export function LeaderboardRow({ user, rank, highlight = false }: LeaderboardRow
     if (increased && !prefersReducedMotion()) {
       setBurst((n) => n + 1);
       setPop(true);
-      const t = setTimeout(() => setPop(false), 460);
+      // Crossed a 100-point milestone on this update? Show a bigger label.
+      const crossed =
+        Math.floor(user.zakuzakuScore / MILESTONE_STEP) >
+        Math.floor(prev.score / MILESTONE_STEP);
+      if (crossed) {
+        const reached =
+          Math.floor(user.zakuzakuScore / MILESTONE_STEP) * MILESTONE_STEP;
+        setMilestone(`⚡${reached}本 達成！`);
+      }
+      const t = setTimeout(() => {
+        setPop(false);
+        setMilestone(null);
+      }, 760);
       return () => clearTimeout(t);
     }
   }, [user.zakuzakuScore, user.blackThunderCount]);
@@ -89,7 +105,7 @@ export function LeaderboardRow({ user, rank, highlight = false }: LeaderboardRow
           highlight && "ring-2 ring-thunder-yellow",
         )}
       >
-        <CrunchBurst trigger={burst} />
+        <CrunchBurst trigger={burst} label={milestone ?? undefined} />
         <Rank rank={rank} />
 
         <Link

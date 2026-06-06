@@ -9,7 +9,7 @@ export default function NotFound() {
         alt=""
         width={160}
         height={160}
-        className="h-32 w-auto animate-boltDrop"
+        className="bt-monster h-32 w-auto animate-boltDrop"
         aria-hidden
       />
       <h1 className="bt-stroke-lg font-display text-5xl font-extrabold text-thunder-yellow">
