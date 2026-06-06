@@ -41,25 +41,48 @@ The first shared theme is available at `themes/oh-my-black.zsh-theme`.
 The `ai-blackthunder` module can show recent AI usage as Black Thunder bars,
 for example `⚡0.7本 (Claude)`.
 
-## Install The Theme
+## Install
 
-For Oh My Zsh, copy or symlink the theme files into your custom themes
-directory:
-
-```zsh
-mkdir -p ~/.oh-my-zsh/custom/themes
-ln -sf "$PWD/themes/oh-my-black.zsh-theme" ~/.oh-my-zsh/custom/themes/oh-my-black.zsh-theme
-ln -sf "$PWD/themes/blackthunder_ascii.txt" ~/.oh-my-zsh/custom/themes/blackthunder_ascii.txt
-ln -sf "$PWD/themes/blackthunder_ascii_118.txt" ~/.oh-my-zsh/custom/themes/blackthunder_ascii_118.txt
-ln -sf "$PWD/themes/blackthunder_ascii_79.txt" ~/.oh-my-zsh/custom/themes/blackthunder_ascii_79.txt
-ln -sf "$PWD/themes/blackthunder_ascii_59.txt" ~/.oh-my-zsh/custom/themes/blackthunder_ascii_59.txt
-```
-
-Then set this in `~/.zshrc`:
+Clone the repo **anywhere** (the path is not hardcoded — the installer
+and runtime resolve it automatically), then run the installer:
 
 ```zsh
-ZSH_THEME="oh-my-black"
+git clone git@github.com:a-company-jp/oh-my-blackthunder.git ~/.oh-my-blackthunder
+~/.oh-my-blackthunder/tools/install.sh
 ```
+
+The installer auto-detects your setup and wires everything up:
+
+- **Oh My Zsh users** → symlinks `omb-games` and the theme into
+  `$ZSH_CUSTOM`. Then add `omb-games` to `plugins=(...)` (and optionally
+  `ZSH_THEME="oh-my-black"`) in `~/.zshrc`.
+- **No Oh My Zsh** → appends a managed block to `~/.zshrc` that sets
+  `OMB` to your clone path and sources the minimal runtime.
+
+Re-running is safe (idempotent). Use `tools/install.sh --print` to see
+the exact steps without changing anything. Reload with `exec zsh`, then
+run `omb` to play.
+
+> Games need `python3` (the installer warns if it is missing).
+
+### Manual setup
+
+If you would rather not run the installer:
+
+**Oh My Zsh** — symlink the plugin and theme into your custom dir, then
+enable them in `~/.zshrc`:
+
+```zsh
+ln -sfn "$PWD/plugins/omb-games" ~/.oh-my-zsh/custom/plugins/omb-games
+ln -sf  "$PWD/themes/oh-my-black.zsh-theme" ~/.oh-my-zsh/custom/themes/oh-my-black.zsh-theme
+for f in "$PWD"/themes/blackthunder_ascii*.txt; do
+  ln -sf "$f" ~/.oh-my-zsh/custom/themes/"${f:t}"
+done
+# ~/.zshrc:  plugins=(... omb-games)   ZSH_THEME="oh-my-black"
+```
+
+**Standalone runtime** — `oh-my-black.sh` resolves its own install root
+and sources the enabled plugins (and an optional theme):
 
 ## Claude Code Status Line
 
@@ -95,9 +118,9 @@ OMB_AI_BLACKTHUNDER_TTL=600
 plugins (and an optional theme). Wire it up from `~/.zshrc`:
 
 ```zsh
-export OMB="$HOME/work/oh-my-blackthunder"   # path to this repo
+export OMB="$HOME/.oh-my-blackthunder"   # ← your actual clone path
 plugins=(omb-games)
-# OMB_THEME="oh-my-black"                     # optional prompt theme
+# OMB_THEME="oh-my-black"                 # optional prompt theme
 source "$OMB/oh-my-black.sh"
 ```
 
@@ -113,8 +136,14 @@ Terminal mini-games with a Black Thunder motif (Python + `curses`).
 ```text
 plugins/omb-games/
 ├── omb-games.plugin.zsh   # launcher: `omb` dispatcher + omb-<game> commands
-└── games/                 # omb-break / pong / snake / dodge / drop / mine (.py)
+└── games/
+    ├── omb-break / pong / snake / dodge / drop / mine (.py)
+    └── blackthunder_ascii.txt   # bundled art so the dir is self-contained
 ```
+
+The plugin is self-contained: it works as a standalone plugin **and** as
+an Oh My Zsh plugin, and `omb break` finds its art even when the folder
+is copied somewhere else (no `OMB` required).
 
 After enabling the plugin, run `omb` for the menu:
 
