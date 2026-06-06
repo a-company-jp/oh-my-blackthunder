@@ -1,0 +1,12 @@
+# Local runtime output
+/cache/*
+!/cache/.gitkeep
+/log/*
+!/log/.gitkeep
+
+# Local customizations
+/custom/*.zsh
+/custom/plugins/*
+!/custom/plugins/.gitkeep
+/custom/themes/*
+!/custom/themes/.gitkeep
