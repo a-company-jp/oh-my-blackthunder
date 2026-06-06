@@ -34,6 +34,9 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
+        with:
+          # The packageManager pin lives in web/package.json (monorepo has no root one).
+          package_json_file: web/package.json
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
