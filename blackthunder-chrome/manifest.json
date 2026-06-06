@@ -9,13 +9,21 @@
   "background": {
     "service_worker": "src/background/service-worker.js"
   },
-  "permissions": ["storage"],
+  "permissions": ["storage", "identity"],
   "host_permissions": [
     "https://github.com/*",
     "http://raspberrypi.local/*",
     "http://127.0.0.1:*/*",
-    "http://localhost:*/*"
+    "http://localhost:*/*",
+    "https://*.run.app/*"
   ],
+  "action": {
+    "default_title": "ThunderCaptcha",
+    "default_popup": "src/popup/popup.html",
+    "default_icon": {
+      "128": "src/assets/logo.png"
+    }
+  },
   "content_scripts": [
     {
       "matches": ["https://github.com/*/*/pull/*"],
@@ -25,6 +33,7 @@
         "src/content/merge-detect.js",
         "src/content/verification.js",
         "src/content/launcher.js",
+        "src/content/leaderboard.js",
         "src/content/modal.js",
         "src/content/effects.js",
         "src/content/main.js"
