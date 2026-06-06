@@ -1,0 +1,8 @@
+# Path to your Oh My Blackthunder installation.
+export OMB="$HOME/.oh-my-blackthunder"
+
+# Theme and plugins will be loaded by oh-my-black.sh once the runtime exists.
+OMB_THEME="blackthunder"
+plugins=(git btdd)
+
+source "$OMB/oh-my-black.sh"
