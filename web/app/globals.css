@@ -204,6 +204,139 @@ body {
   }
 }
 
+/* --------------------------------------------------------------------------
+   Easter-egg motion (added in feat/web-easter-eggs). All decorative, all
+   aria-hidden where rendered, and every looping/heavy animation is disabled in
+   the prefers-reduced-motion block below.
+   -------------------------------------------------------------------------- */
+@layer components {
+  /* Falling bars / monsters used by ザクザクモード and the secret crunch. The
+     per-item left / size / delay / duration / drift come from inline vars. */
+  .bt-fall {
+    position: absolute;
+    top: -12vh;
+    left: var(--x, 50%);
+    width: var(--size, 48px);
+    height: auto;
+    opacity: 0;
+    will-change: transform, opacity;
+    animation: bt-fall var(--dur, 3.4s) linear infinite;
+    animation-delay: var(--delay, 0s);
+  }
+
+  /* A subtle lightning cursor-trail spark. Lifetime is driven by JS removal. */
+  .bt-spark {
+    position: fixed;
+    z-index: 55;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    font-size: var(--spark-size, 14px);
+    line-height: 1;
+    color: var(--thunder-yellow);
+    text-shadow: 0 0 8px rgba(255, 211, 0, 0.6);
+    animation: bt-spark-fade 0.6s ease-out forwards;
+    will-change: transform, opacity;
+  }
+
+  /* Screen crunch shake (secret word "zakuzaku"). */
+  .bt-shake {
+    animation: bt-shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  }
+
+  /* Monsters that react on hover/focus: a quick wiggle + little jump. */
+  .bt-monster {
+    transition: transform 0.2s ease;
+  }
+  .bt-monster:hover,
+  .bt-monster:focus-visible {
+    animation: bt-monster-wiggle 0.5s ease-in-out;
+  }
+}
+
+@keyframes bt-monster-wiggle {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-8px) rotate(-6deg);
+  }
+  50% {
+    transform: translateY(-2px) rotate(5deg);
+  }
+  75% {
+    transform: translateY(-6px) rotate(-3deg);
+  }
+}
+
+@keyframes bt-fall {
+  0% {
+    opacity: 0;
+    transform: translateY(0) translateX(0) rotate(0deg);
+  }
+  8% {
+    opacity: 1;
+  }
+  92% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(118vh) translateX(var(--drift, 0px))
+      rotate(var(--rot, 360deg));
+  }
+}
+
+@keyframes bt-spark-fade {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 10px)) scale(0.4);
+  }
+}
+
+/* A monster strolling across the bottom of the viewport, with a little
+   walk-bob. Direction picked per trip in StrollingMonster.tsx. */
+@keyframes bt-stroll-ltr {
+  0% {
+    transform: translateX(0) translateY(0);
+  }
+  100% {
+    transform: translateX(calc(100vw + 160px)) translateY(0);
+  }
+}
+@keyframes bt-stroll-rtl {
+  0% {
+    transform: translateX(0) translateY(0);
+  }
+  100% {
+    transform: translateX(calc(-100vw - 160px)) translateY(0);
+  }
+}
+
+@keyframes bt-shake {
+  10%,
+  90% {
+    transform: translate3d(-2px, 0, 0);
+  }
+  20%,
+  80% {
+    transform: translate3d(4px, 0, 0);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translate3d(-7px, 1px, 0);
+  }
+  40%,
+  60% {
+    transform: translate3d(7px, -1px, 0);
+  }
+}
+
 /* Respect reduced-motion: kill the looping / decorative animations. */
 @media (prefers-reduced-motion: reduce) {
   .animate-zakuzaku,
@@ -216,10 +349,15 @@ body {
   .bt-bolt,
   .bt-modal,
   .bt-spinner,
-  .bt-spinner-sm {
+  .bt-spinner-sm,
+  .bt-shake,
+  .bt-monster:hover,
+  .bt-monster:focus-visible {
     animation: none !important;
   }
-  .bt-bolt-rain {
+  .bt-bolt-rain,
+  .bt-fall,
+  .bt-spark {
     display: none !important;
   }
 }

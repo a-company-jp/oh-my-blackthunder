@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Noto_Sans_JP, RocknRoll_One } from "next/font/google";
 
+import { EasterEggProvider } from "@/app/components/eastereggs/EasterEggProvider";
 import { Header } from "@/app/components/Header";
 import { AuthProvider } from "@/lib/auth-context";
 import "@/app/globals.css";
@@ -55,6 +56,7 @@ export default function RootLayout({
           <main className="mx-auto w-full max-w-5xl px-4 pb-24 pt-6 sm:px-6">
             {children}
           </main>
+          <EasterEggProvider />
         </AuthProvider>
       </body>
     </html>

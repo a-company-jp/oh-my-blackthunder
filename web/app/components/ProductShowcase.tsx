@@ -8,6 +8,8 @@
 
 import Image from "next/image";
 
+import { useTilt } from "@/app/components/eastereggs/useTilt";
+
 interface Product {
   name: string;
   tagline: string;
@@ -131,49 +133,57 @@ function GithubMark() {
   );
 }
 
+function ProductCard({ p }: { p: Product }) {
+  // Cursor-follow tilt (no-op under reduced-motion / touch).
+  const tiltRef = useTilt<HTMLAnchorElement>();
+  return (
+    <a
+      ref={tiltRef}
+      href={p.href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="bt-panel group relative flex flex-col gap-3 overflow-hidden p-5 transition-transform duration-200 [transform-style:preserve-3d] will-change-transform"
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-4 -top-4 h-24 w-24 rounded-full bg-thunder-yellow/10 blur-2xl transition group-hover:bg-thunder-yellow/20"
+      />
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p
+            className={`font-display text-xs font-bold uppercase tracking-wide ${p.accent}`}
+          >
+            {p.tagline}
+          </p>
+          <h3 className="mt-0.5 break-words font-display text-lg font-extrabold leading-tight text-white">
+            {p.name}
+          </h3>
+        </div>
+        <Image
+          src={p.art}
+          alt=""
+          width={72}
+          height={72}
+          aria-hidden
+          className={`h-14 w-14 shrink-0 select-none object-contain drop-shadow-[0_4px_0_rgba(0,0,0,0.5)] transition-transform duration-300 ${p.rotate} group-hover:rotate-0 group-hover:scale-110`}
+        />
+      </div>
+      <TechLogos name={p.name} />
+      <p className="text-sm leading-relaxed text-white/65">{p.description}</p>
+      <span className="mt-auto inline-flex items-center gap-1.5 pt-1 text-sm font-bold text-thunder-yellow transition group-hover:gap-2.5">
+        <GithubMark />
+        GitHub で見る
+        <span aria-hidden>→</span>
+      </span>
+    </a>
+  );
+}
+
 export function ProductShowcase() {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {PRODUCTS.map((p) => (
-        <a
-          key={p.name}
-          href={p.href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="bt-panel group relative flex flex-col gap-3 overflow-hidden p-5 transition-transform duration-200 hover:-translate-y-1"
-        >
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -right-4 -top-4 h-24 w-24 rounded-full bg-thunder-yellow/10 blur-2xl transition group-hover:bg-thunder-yellow/20"
-          />
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p
-                className={`font-display text-xs font-bold uppercase tracking-wide ${p.accent}`}
-              >
-                {p.tagline}
-              </p>
-              <h3 className="mt-0.5 break-words font-display text-lg font-extrabold leading-tight text-white">
-                {p.name}
-              </h3>
-            </div>
-            <Image
-              src={p.art}
-              alt=""
-              width={72}
-              height={72}
-              aria-hidden
-              className={`h-14 w-14 shrink-0 select-none object-contain drop-shadow-[0_4px_0_rgba(0,0,0,0.5)] transition-transform duration-300 ${p.rotate} group-hover:rotate-0 group-hover:scale-110`}
-            />
-          </div>
-          <TechLogos name={p.name} />
-          <p className="text-sm leading-relaxed text-white/65">{p.description}</p>
-          <span className="mt-auto inline-flex items-center gap-1.5 pt-1 text-sm font-bold text-thunder-yellow transition group-hover:gap-2.5">
-            <GithubMark />
-            GitHub で見る
-            <span aria-hidden>→</span>
-          </span>
-        </a>
+        <ProductCard key={p.name} p={p} />
       ))}
     </div>
   );

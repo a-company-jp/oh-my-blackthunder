@@ -8,6 +8,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import clsx from "clsx";
 
+import { LogoEgg } from "@/app/components/eastereggs/LogoEgg";
 import { SignInButton } from "@/app/components/SignInButton";
 import { UserMenu } from "@/app/components/UserMenu";
 import { useAuth } from "@/lib/auth-context";
@@ -36,23 +37,25 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 border-b-2 border-thunder-black bg-thunder-black/80 backdrop-blur supports-[backdrop-filter]:bg-thunder-black/60">
       <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-        <Link
-          href="/"
-          className="flex items-center gap-2 transition hover:brightness-110"
-          aria-label="ホーム — Black Thunder"
-        >
-          <Image
-            src="/assets/logo/blackthunder-wordmark.png"
-            alt="Black Thunder"
-            width={148}
-            height={32}
-            priority
-            className="h-7 w-auto sm:h-8"
-          />
-          <span className="hidden font-display text-xs font-bold text-thunder-yellow/80 lg:inline">
-            ⚡ザクザク開発
-          </span>
-        </Link>
+        <LogoEgg>
+          <Link
+            href="/"
+            className="flex items-center gap-2 transition hover:brightness-110"
+            aria-label="ホーム — Black Thunder"
+          >
+            <Image
+              src="/assets/logo/blackthunder-wordmark.png"
+              alt="Black Thunder"
+              width={148}
+              height={32}
+              priority
+              className="h-7 w-auto sm:h-8"
+            />
+            <span className="hidden font-display text-xs font-bold text-thunder-yellow/80 lg:inline">
+              ⚡ザクザク開発
+            </span>
+          </Link>
+        </LogoEgg>
 
         {/* Desktop nav */}
         <nav className="hidden items-center gap-1 md:flex" aria-label="メインナビゲーション">
