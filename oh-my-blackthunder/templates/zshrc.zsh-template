@@ -11,6 +11,7 @@ OMB_THEME="oh-my-black"
 #   cat … Black Thunder style cat（thunder_cat）
 #   diff … Black Thunder style diff（thunder_diff）
 #   fzf … Black Thunder style fzf（thunder_fzf）
-plugins=(ai-blackthunder cat diff fzf omb-games)
+#   log … Black Thunder style log colorizer（thunder_log）
+plugins=(ai-blackthunder cat diff fzf log omb-games)
 
 source "$OMB/oh-my-black.sh"

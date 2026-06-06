@@ -5,7 +5,7 @@
 #  リポジトリを clone した後に実行すると、環境に合わせて自動配線する:
 #
 #    * Oh My Zsh あり … plugins/themes を $ZSH_CUSTOM に symlink。
-#                       あとは ~/.zshrc の plugins=(... omb-games cat diff fzf) と
+#                       あとは ~/.zshrc の plugins=(... omb-games cat diff log fzf) と
 #                       （任意で）ZSH_THEME="oh-my-black" を有効化するだけ。
 #    * Oh My Zsh なし … ~/.zshrc に最小ランタイムの読み込みブロックを
 #                       追記（OMB はこのリポジトリの実パスを自動設定）。
@@ -108,6 +108,7 @@ _ensure_brew_package fzf fzf fzf && OMB_FZF_READY=1
 OMB_DEFAULT_PLUGINS=(omb-games)
 [[ -d "$OMB_ROOT/plugins/cat" ]] && OMB_DEFAULT_PLUGINS+=(cat)
 OMB_DEFAULT_PLUGINS+=(diff)
+[[ -d "$OMB_ROOT/plugins/log" ]] && OMB_DEFAULT_PLUGINS+=(log)
 (( OMB_FZF_READY )) && [[ -d "$OMB_ROOT/plugins/fzf" ]] && OMB_DEFAULT_PLUGINS+=(fzf)
 OMB_DEFAULT_PLUGINS_TEXT="${(j: :)OMB_DEFAULT_PLUGINS}"
 
@@ -124,6 +125,7 @@ if [[ -d "$OMZ_DIR" ]]; then
   _link "$OMB_ROOT/plugins/omb-games" "$ZSH_CUSTOM/plugins/omb-games"
   _link "$OMB_ROOT/plugins/cat" "$ZSH_CUSTOM/plugins/cat"
   _link "$OMB_ROOT/plugins/diff" "$ZSH_CUSTOM/plugins/diff"
+  _link "$OMB_ROOT/plugins/log" "$ZSH_CUSTOM/plugins/log"
   [[ -d "$OMB_ROOT/plugins/fzf" ]] && _link "$OMB_ROOT/plugins/fzf" "$ZSH_CUSTOM/plugins/fzf"
 
   # テーマ + AA ファイル
