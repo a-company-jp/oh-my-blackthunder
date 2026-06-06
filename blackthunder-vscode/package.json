@@ -1,0 +1,106 @@
+{
+  "name": "blackthunder",
+  "displayName": "ブラックサンダー / Black Thunder",
+  "description": "gitのコミットを「ブラックサンダーの草」として表示し、コミットするとザクザク音が鳴る、おやつ系VSCode拡張機能。",
+  "version": "0.2.1",
+  "publisher": "your-publisher-id",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "blackthunder",
+    "ブラックサンダー",
+    "fun",
+    "snack",
+    "reward"
+  ],
+  "icon": "media/icon.png",
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "themes": [
+      {
+        "label": "Black Thunder",
+        "uiTheme": "vs-dark",
+        "path": "./themes/black-thunder-color-theme.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "blackthunder.eat",
+        "title": "ザクッと味見（音を鳴らす）",
+        "category": "Black Thunder",
+        "icon": "$(zap)"
+      },
+      {
+        "command": "blackthunder.refreshGrass",
+        "title": "コミットの草を更新",
+        "category": "Black Thunder",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "blackthunder.demoProgress",
+        "title": "進捗バーをデモ表示",
+        "category": "Black Thunder",
+        "icon": "$(zap)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "blackthunder",
+          "title": "Black Thunder",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "blackthunder": [
+        {
+          "id": "blackthunder.sidebar",
+          "name": "コミットの草",
+          "type": "webview"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Black Thunder",
+      "properties": {
+        "blackthunder.crunchOnCommit": {
+          "type": "boolean",
+          "default": true,
+          "description": "コミットしたときに「ザクザク」というクランチ音を鳴らす"
+        },
+        "blackthunder.enableSound": {
+          "type": "boolean",
+          "default": true,
+          "description": "効果音（クランチ音・雷音）を鳴らす"
+        },
+        "blackthunder.showBuildProgress": {
+          "type": "boolean",
+          "default": true,
+          "description": "ビルド/テスト/保存/コミット時、ブラックサンダーが震えながら走る進捗バーを表示する"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
+    "package": "npm run compile -- --minify",
+    "watch": "npm run compile -- --sourcemap --watch",
+    "lint": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.3.0"
+  }
+}
