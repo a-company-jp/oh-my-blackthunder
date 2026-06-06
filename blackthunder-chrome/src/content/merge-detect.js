@@ -54,7 +54,15 @@
     if (!el) return "";
     var tag = (el.tagName || "").toLowerCase();
     if (tag === "input") return el.value || "";
-    return (el.innerText || el.textContent || "").trim();
+    var full = el.innerText || el.textContent || "";
+    // 自前バッジ(.bt-ci-badge)をボタン内に挿入している場合、そのテキストが
+    // 混ざって判定を誤らせるので差し引く。
+    var badge = el.querySelector && el.querySelector(".bt-ci-badge");
+    if (badge) {
+      var btext = badge.innerText || badge.textContent || "";
+      if (btext) full = full.split(btext).join(" ");
+    }
+    return full.replace(/\s+/g, " ").trim();
   }
 
   /** disabled / aria-disabled / disabled クラスを持つ要素か。 */
@@ -79,11 +87,43 @@
     return isMergeButtonText(getButtonText(el)) ? el : null;
   }
 
+  /** 要素が候補セレクタ（button / input[submit] / summary / a[role=button]）に該当するか。 */
+  function isCandidate(el) {
+    if (!el || el.nodeType !== 1) return false;
+    var tag = (el.tagName || "").toLowerCase();
+    if (tag === "button" || tag === "summary") return true;
+    if (tag === "input") {
+      return (el.getAttribute("type") || "").toLowerCase() === "submit";
+    }
+    if (tag === "a") return el.getAttribute("role") === "button";
+    return false;
+  }
+
+  /**
+   * event.composedPath() の配列から Merge 系操作要素を探す。
+   * Shadow DOM 内のボタンも composedPath には現れるため、document の
+   * capture listener からでも掴める。
+   * @param {EventTarget[]} path target -> root の順
+   * @returns {Element|null}
+   */
+  function findMergeElementFromPath(path) {
+    if (!path || !path.length) return null;
+    for (var i = 0; i < path.length; i++) {
+      var el = path[i];
+      if (!isCandidate(el)) continue;
+      if (isDisabled(el)) continue;
+      if (isMergeButtonText(getButtonText(el))) return el;
+    }
+    return null;
+  }
+
   var api = {
     isMergeButtonText: isMergeButtonText,
     getButtonText: getButtonText,
     isDisabled: isDisabled,
+    isCandidate: isCandidate,
     findMergeElement: findMergeElement,
+    findMergeElementFromPath: findMergeElementFromPath,
     CANDIDATE_SELECTOR: CANDIDATE_SELECTOR,
     MERGE_TEXTS: MERGE_TEXTS
   };
