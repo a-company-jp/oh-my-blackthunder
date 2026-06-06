@@ -1,8 +1,12 @@
 # Path to your Oh My Blackthunder installation.
 export OMB="$HOME/.oh-my-blackthunder"
 
-# Theme and plugins will be loaded by oh-my-black.sh once the runtime exists.
-OMB_THEME="blackthunder"
-plugins=(git btdd)
+# Optional prompt theme (themes/<name>.zsh-theme). Leave unset to keep your
+# current prompt. The bundled "oh-my-black" theme borrows Oh My Zsh helpers.
+# OMB_THEME="oh-my-black"
+
+# Enabled plugins (plugins/<name>/<name>.plugin.zsh).
+#   omb-games … ターミナルで遊べるブラックサンダー風ミニゲーム集（omb <game>）
+plugins=(omb-games)
 
 source "$OMB/oh-my-black.sh"
