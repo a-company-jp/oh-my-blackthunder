@@ -1,9 +1,11 @@
 # AI usage module for Oh My Blackthunder.
 #
 # Providers write only tiny usage entries:
-#   providers/Claude.tsv: <unix timestamp>\t<blackthunder bars>
-#   events/Codex.tsv:    <unix timestamp>\t<blackthunder bars>
+#   providers/Claude/<id>.tsv: <unix timestamp>\t<blackthunder bars>  (one per session, summed)
+#   events/Codex.tsv:          <unix timestamp>\t<blackthunder bars>
 #
+# Claude reports each session's cumulative cost, so snapshots are kept per
+# session and summed over the active window to accumulate across terminals.
 # Codex session files are scanned for token_count events only. No prompts,
 # transcripts, session IDs, or command output are stored.
 

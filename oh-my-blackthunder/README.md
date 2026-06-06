@@ -120,13 +120,18 @@ that reads only `token_count` events, plus minimal model metadata, to estimate
 Codex usage as Black Thunder bars. No Codex-side config is required.
 
 The monitor stores Codex usage as event rows in
-`cache/ai-blackthunder/events/Codex.tsv`. Claude usage is stored as a provider
-snapshot in `cache/ai-blackthunder/providers/Claude.tsv`, because Claude Code
-can call the status line command repeatedly for the same session. Monitor
-state uses hashed session paths and file offsets; prompts, transcripts,
-session IDs, and command output are not stored. Scans are serialized with a
-small lock directory under the cache so multiple terminals do not update the
-same state file at the same time.
+`cache/ai-blackthunder/events/Codex.tsv`. Claude usage is accumulated as one
+snapshot per session under `cache/ai-blackthunder/providers/Claude/<id>.tsv`:
+Claude Code calls the status line command repeatedly for the same session and
+reports that session's *cumulative* cost, so each session id keeps a single
+overwritten snapshot and the prompt sums the snapshots whose timestamp falls
+inside `OMB_AI_BLACKTHUNDER_WINDOW_SECONDS` (default 5h). This keeps the bar
+count accumulating across terminals instead of resetting to zero when a new
+session starts. Snapshots older than the retention window are pruned on the
+next status line tick. Monitor state uses hashed session paths and file
+offsets; prompts, transcripts, session IDs, and command output are not stored.
+Scans are serialized with a small lock directory under the cache so multiple
+terminals do not update the same state file at the same time.
 
 Codex event rows include a deterministic event id, so if a scan writes events
 but exits before saving its file offsets, the next scan can retry without

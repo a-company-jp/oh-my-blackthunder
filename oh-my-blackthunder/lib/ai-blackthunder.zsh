@@ -77,6 +77,46 @@ function _omb_ai_blackthunder_snapshot_bars() {
   ' "$file"
 }
 
+# Sum the latest snapshot of every session bucket within the window. Each Claude
+# session reports its own cumulative cost into providers/<provider>/<id>.tsv, so
+# summing the per-session snapshots gives the rolling total across all terminals
+# without double counting a single session's repeated reports.
+function _omb_ai_blackthunder_session_sum_bars() {
+  local provider="$1"
+  local now="$2"
+  local window="$3"
+  local dir="$(_omb_ai_blackthunder_cache_dir)/providers/$provider"
+
+  [[ -d "$dir" ]] || return
+
+  # Keep glob qualifiers working and silent regardless of the user's options.
+  setopt local_options bare_glob_qual null_glob no_nomatch
+
+  local f line ts bars
+  local -a vals
+  for f in "$dir"/*.tsv(N.); do
+    [[ -r "$f" ]] || continue
+    line="$(< "$f")" 2>/dev/null || continue
+    # If a file ever holds multiple lines, the last one is the latest snapshot.
+    line="${line##*$'\n'}"
+    IFS=$'\t' read -r ts bars <<< "$line"
+    [[ "$ts" == <-> ]] || continue
+    case "$bars" in
+      (''|*[!0-9.]*|*.*.*) continue ;;
+    esac
+    (( now - ts >= 0 && now - ts <= window )) || continue
+    vals+="$bars"
+  done
+
+  (( ${#vals} )) || return
+
+  print -r -- "${vals[@]}" | awk '{
+    sum = 0
+    for (i = 1; i <= NF; i++) sum += $i
+    if (sum > 0) print sum
+  }'
+}
+
 function _omb_ai_blackthunder_event_bars() {
   local provider="$1"
   local now="$2"
@@ -144,7 +184,10 @@ function _omb_ai_blackthunder_prompt() {
   window="${OMB_AI_BLACKTHUNDER_WINDOW_SECONDS:-18000}"
   [[ "$window" == <-> ]] || window=18000
 
-  claude_bars="$(_omb_ai_blackthunder_snapshot_bars Claude "$now" "$window")"
+  claude_bars="$(_omb_ai_blackthunder_session_sum_bars Claude "$now" "$window")"
+  # Fall back to the single-file snapshot for caches written before per-session
+  # accumulation existed.
+  [[ -n "$claude_bars" ]] || claude_bars="$(_omb_ai_blackthunder_snapshot_bars Claude "$now" "$window")"
   codex_bars="$(_omb_ai_blackthunder_event_bars Codex "$now" "$window")"
 
   if [[ -n "$claude_bars" || -n "$codex_bars" ]]; then
