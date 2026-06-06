@@ -1,4 +1,5 @@
-# Path to your Oh My Blackthunder installation.
+# Path to your Oh My Blackthunder installation (your actual clone path).
+# Tip: `tools/install.sh` wires this up for you automatically.
 export OMB="$HOME/.oh-my-blackthunder"
 
 # Optional prompt theme (themes/<name>.zsh-theme). Leave unset to keep your

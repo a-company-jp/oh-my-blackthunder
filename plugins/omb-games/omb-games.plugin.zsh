@@ -9,11 +9,29 @@
 #             omb-<game>     個別コマンドでも可
 # =====================================================================
 
-OMB_GAMES_DIR="${${(%):-%x}:A:h}"            # = plugins/omb-games
+OMB_GAMES_DIR="${${(%):-%x}:A:h}"            # = plugins/omb-games（symlink も :A で実体解決）
 OMB_GAMES_PY="$OMB_GAMES_DIR/games"
 # リポジトリ(インストール)ルート。OMB が未設定でもプラグイン位置から導出。
 OMB_GAMES_ROOT="${OMB:-${OMB_GAMES_DIR:h:h}}"
-OMB_GAMES_ASCII="$OMB_GAMES_ROOT/themes/blackthunder_ascii.txt"
+
+# ブロック崩しの AA を探索する。OMB 未設定/誤設定・oh-my-zsh へのコピー配布でも
+# 動くよう、複数の場所を順に確認して最初に在ったものを使う。
+#   1) $OMB_ASCII                                  … 明示指定（最優先）
+#   2) <repo>/themes/blackthunder_ascii.txt        … 単体フレームワーク配置
+#   3) games/blackthunder_ascii.txt                … プラグイン同梱（コピー配布でも自己完結）
+OMB_GAMES_ASCII=""
+local _omb_a
+for _omb_a in \
+  "${OMB_ASCII:-}" \
+  "$OMB_GAMES_ROOT/themes/blackthunder_ascii.txt" \
+  "$OMB_GAMES_PY/blackthunder_ascii.txt"
+do
+  if [[ -n "$_omb_a" && -f "$_omb_a" ]]; then
+    OMB_GAMES_ASCII="$_omb_a"
+    break
+  fi
+done
+unset _omb_a
 
 # 内部: omb-<game>.py を起動
 _omb_run() {
