@@ -6,7 +6,7 @@
 #
 # Usage (see templates/zshrc.zsh-template):
 #   export OMB="$HOME/work/oh-my-blackthunder"
-#   plugins=(omb-games)
+#   plugins=(omb-games diff)
 #   OMB_THEME="oh-my-black"      # optional
 #   source "$OMB/oh-my-black.sh"
 
