@@ -5,7 +5,7 @@
 #  リポジトリを clone した後に実行すると、環境に合わせて自動配線する:
 #
 #    * Oh My Zsh あり … plugins/themes を $ZSH_CUSTOM に symlink。
-#                       あとは ~/.zshrc の plugins=(... omb-games diff fzf) と
+#                       あとは ~/.zshrc の plugins=(... omb-games cat diff fzf) と
 #                       （任意で）ZSH_THEME="oh-my-black" を有効化するだけ。
 #    * Oh My Zsh なし … ~/.zshrc に最小ランタイムの読み込みブロックを
 #                       追記（OMB はこのリポジトリの実パスを自動設定）。
@@ -19,6 +19,9 @@
 #
 #  オプション:
 #    --print   変更を加えず、必要な手順だけ表示する
+#
+#  依存関係:
+#    fzf が未導入で Homebrew が使える場合は、自動で brew install する。
 # =====================================================================
 emulate -L zsh
 set -u
@@ -34,6 +37,42 @@ PRINT_ONLY=0
 _say()  { print -P "%F{220}⚡%f $*" }
 _ok()   { print -P "  %F{green}✓%f $*" }
 _warn() { print -P "  %F{yellow}!%f $*" }
+_run_or_print() {
+  if (( PRINT_ONLY )); then
+    print "  $*"
+  else
+    "$@"
+  fi
+}
+_ensure_brew_package() {
+  local cmd="$1" package="$2" label="$3"
+
+  if command -v "$cmd" >/dev/null 2>&1; then
+    _ok "$label 検出: $(command -v "$cmd")"
+    return 0
+  fi
+
+  if command -v brew >/dev/null 2>&1; then
+    _say "$label が見つかりません。Homebrew でインストールします。"
+    if _run_or_print brew install "$package"; then
+      if (( PRINT_ONLY )); then
+        _ok "$label は brew install $package で導入されます"
+        return 0
+      fi
+      if command -v "$cmd" >/dev/null 2>&1; then
+        _ok "$label インストール完了: $(command -v "$cmd")"
+        return 0
+      fi
+      _warn "brew install $package は完了しましたが PATH 上に $label が見つかりません。新しいシェルで再確認してください。"
+      return 0
+    fi
+    _warn "$label の自動インストールに失敗しました。手動で 'brew install $package' を実行してください。"
+    return 1
+  fi
+
+  _warn "$label が見つかりません。Homebrew などで手動インストールしてください。"
+  return 1
+}
 _link() {
   # _link <src> <dst>  … dst が既に正しい symlink なら何もしない
   local src="$1" dst="$2"
@@ -62,12 +101,15 @@ else
   _warn "python3 が見つかりません。ゲーム（omb <game>）には python3 が必要です。"
 fi
 
-# ---- fzf チェック（thunder_fzf の必須要件）-------------------------
-if command -v fzf >/dev/null 2>&1; then
-  _ok "fzf 検出: $(command -v fzf)"
-else
-  _warn "fzf が見つかりません。thunder_fzf には fzf が必要です。"
-fi
+# ---- CLI ラッパーの依存関係 ---------------------------------------
+OMB_FZF_READY=0
+_ensure_brew_package fzf fzf fzf && OMB_FZF_READY=1
+
+OMB_DEFAULT_PLUGINS=(omb-games)
+[[ -d "$OMB_ROOT/plugins/cat" ]] && OMB_DEFAULT_PLUGINS+=(cat)
+OMB_DEFAULT_PLUGINS+=(diff)
+(( OMB_FZF_READY )) && [[ -d "$OMB_ROOT/plugins/fzf" ]] && OMB_DEFAULT_PLUGINS+=(fzf)
+OMB_DEFAULT_PLUGINS_TEXT="${(j: :)OMB_DEFAULT_PLUGINS}"
 
 # ---- Oh My Zsh の検出 ----------------------------------------------
 OMZ_DIR="${ZSH:-$HOME/.oh-my-zsh}"
@@ -80,8 +122,9 @@ if [[ -d "$OMZ_DIR" ]]; then
 
   # プラグイン一式
   _link "$OMB_ROOT/plugins/omb-games" "$ZSH_CUSTOM/plugins/omb-games"
+  _link "$OMB_ROOT/plugins/cat" "$ZSH_CUSTOM/plugins/cat"
   _link "$OMB_ROOT/plugins/diff" "$ZSH_CUSTOM/plugins/diff"
-  _link "$OMB_ROOT/plugins/fzf" "$ZSH_CUSTOM/plugins/fzf"
+  [[ -d "$OMB_ROOT/plugins/fzf" ]] && _link "$OMB_ROOT/plugins/fzf" "$ZSH_CUSTOM/plugins/fzf"
 
   # テーマ + AA ファイル
   _link "$OMB_ROOT/themes/oh-my-black.zsh-theme" "$ZSH_CUSTOM/themes/oh-my-black.zsh-theme"
@@ -92,8 +135,9 @@ if [[ -d "$OMZ_DIR" ]]; then
 
   print
   _say "あと一歩。~/.zshrc を次のように編集してください:"
-  print "    plugins=(... omb-games diff fzf) # ← 使いたいプラグインを追加"
+  print "    plugins=(... $OMB_DEFAULT_PLUGINS_TEXT) # ← 使いたいプラグインを追加"
   print "    ZSH_THEME=\"oh-my-black\"        # ← 任意（黒×金の稲妻プロンプト）"
+  (( OMB_FZF_READY )) || print "    # fzf を導入後に fzf プラグインを追加できます"
   print
   _say "反映:  exec zsh   （または新しいターミナルを開く）"
   _say "遊ぶ:  omb        （ゲーム一覧）"
@@ -109,7 +153,7 @@ else
   block="$MARK_BEGIN
 # Oh My Blackthunder（このブロックは install.sh が管理。手動編集可）
 export OMB=\"$OMB_ROOT\"
-plugins=(omb-games diff fzf)
+plugins=($OMB_DEFAULT_PLUGINS_TEXT)
 # OMB_THEME=\"oh-my-black\"   # 任意のプロンプトテーマ
 [ -r \"\$OMB/oh-my-black.sh\" ] && source \"\$OMB/oh-my-black.sh\"
 $MARK_END"
