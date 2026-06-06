@@ -11,7 +11,7 @@
   --bt-ci-black: #0a0a0a;
 }
 
-/* ===== Overlay & Modal ===== */
+/* ===== Overlay ===== */
 .bt-ci-overlay {
   position: fixed;
   inset: 0;
@@ -25,167 +25,172 @@
   -webkit-font-smoothing: antialiased;
 }
 
-.bt-ci-modal {
-  box-sizing: border-box;
-  width: min(440px, 92vw);
-  padding: 26px 26px 22px;
-  border-radius: 16px;
-  background: var(--bt-ci-black);
-  border: 3px solid var(--bt-ci-yellow);
-  box-shadow: 0 0 0 4px rgba(230, 0, 18, 0.55), 0 24px 60px rgba(0, 0, 0, 0.6);
-  color: #fff;
-  text-align: center;
-  animation: bt-ci-pop 0.18s ease-out;
-}
-
 @keyframes bt-ci-pop {
   from { transform: scale(0.9); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
 
-.bt-ci-title {
-  font-size: 22px;
-  font-weight: 900;
-  letter-spacing: 0.5px;
-  color: var(--bt-ci-yellow);
-  text-shadow: 2px 2px 0 var(--bt-ci-red);
+/* ウィジェット + ステータスの縦積み */
+.bt-ci-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
 }
 
-.bt-ci-lead {
-  margin-top: 10px;
-  font-size: 13px;
-  color: #ddd;
-}
-
-.bt-ci-question {
-  margin-top: 14px;
-  font-size: 16px;
-  font-weight: 800;
-  line-height: 1.5;
-}
-
-/* ===== reCAPTCHA 風チェック ===== */
-.bt-ci-check {
+/* ===== reCAPTCHA v2 風 チェックボックス ウィジェット ===== */
+.bt-ci-widget {
+  box-sizing: border-box;
+  width: min(320px, 92vw);
+  min-height: 76px;
   display: flex;
   align-items: center;
   gap: 12px;
-  margin: 18px 0 10px;
-  padding: 14px 14px;
-  background: #fff;
-  border: 2px solid #c9c9c9;
-  border-radius: 10px;
+  padding: 12px 14px;
+  background: var(--bt-ci-black);
+  border: 2px solid var(--bt-ci-yellow);
+  border-radius: 6px;
+  box-shadow: 0 0 0 3px rgba(230, 0, 18, 0.45), 0 6px 18px rgba(0, 0, 0, 0.5);
+  color: #fff;
   cursor: pointer;
   user-select: none;
+  animation: bt-ci-pop 0.18s ease-out;
 }
 
-.bt-ci-check.bt-ci-checked {
-  border-color: var(--bt-ci-yellow);
-  box-shadow: 0 0 0 3px rgba(255, 211, 0, 0.45);
+.bt-ci-widget:focus-visible {
+  outline: 2px solid var(--bt-ci-yellow);
+  outline-offset: 2px;
 }
 
-/* 本物のチェックボックスは隠してカスタム枠を見せる */
-.bt-ci-checkbox {
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
-  margin: 0;
-}
-
-.bt-ci-checkbox-box {
+/* --- 左の四角いチェックボックス --- */
+.bt-ci-box {
   flex: 0 0 auto;
-  width: 26px;
-  height: 26px;
+  width: 30px;
+  height: 30px;
   border: 2px solid #9a9a9a;
-  border-radius: 5px;
+  border-radius: 3px;
   background: #fff;
   position: relative;
+  transition: border-radius 0.2s ease;
 }
 
-.bt-ci-check.bt-ci-checked .bt-ci-checkbox-box {
-  background: var(--bt-ci-yellow);
-  border-color: var(--bt-ci-red);
+/* 押した直後のグルグル（reCAPTCHA のスピナー） */
+.bt-ci-box-loading {
+  border-color: transparent;
+  background: transparent;
 }
 
-.bt-ci-check.bt-ci-checked .bt-ci-checkbox-box::after {
+.bt-ci-box-loading::before {
   content: "";
   position: absolute;
-  left: 8px;
-  top: 3px;
-  width: 6px;
-  height: 12px;
-  border: solid var(--bt-ci-black);
-  border-width: 0 3px 3px 0;
-  transform: rotate(45deg);
+  inset: 0;
+  border: 3px solid rgba(255, 211, 0, 0.25);
+  border-top-color: var(--bt-ci-yellow);
+  border-radius: 50%;
+  animation: bt-ci-spin 0.7s linear infinite;
 }
 
-.bt-ci-check-label {
+@keyframes bt-ci-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* チェック済み（金地に黒いチェック）。reCAPTCHA 風に丸くなってポップする。 */
+.bt-ci-box-checked {
+  background: var(--bt-ci-yellow);
+  border-color: var(--bt-ci-red);
+  border-radius: 50%;
+  animation: bt-ci-box-pop 0.28s ease-out;
+}
+
+@keyframes bt-ci-box-pop {
+  0% { transform: scale(0.7); }
+  55% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+/* 線を描くように現れるチェックマーク（reCAPTCHA 風） */
+.bt-ci-check-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.bt-ci-check-svg polyline {
+  fill: none;
+  stroke: var(--bt-ci-black);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 26;
+  stroke-dashoffset: 26;
+  animation: bt-ci-check-draw 0.34s 0.06s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+@keyframes bt-ci-check-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+/* --- 中央のラベル --- */
+.bt-ci-label {
   flex: 1 1 auto;
-  text-align: left;
+  min-width: 0;
   font-size: 14px;
   font-weight: 700;
-  color: #111;
+  line-height: 1.35;
+  color: #fff;
+  text-align: left;
+  overflow-wrap: anywhere;
 }
 
-.bt-ci-check-logo {
+/* --- 右のブランド（ロゴ + 名前 + 規約） --- */
+.bt-ci-brand {
   flex: 0 0 auto;
-  font-size: 20px;
+  text-align: center;
+  white-space: nowrap;
+  color: #cfcfcf;
 }
 
-.bt-ci-notice {
-  font-size: 12px;
+.bt-ci-brand-logo {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 2px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+}
+
+.bt-ci-brand-logo-fallback {
+  font-size: 28px;
+  line-height: 34px;
+}
+
+.bt-ci-brand-name {
+  font-size: 9px;
+  font-weight: 700;
   color: var(--bt-ci-yellow);
-  margin-bottom: 6px;
+  letter-spacing: -0.2px;
+}
+
+.bt-ci-brand-terms {
+  font-size: 8px;
+  color: #888;
+  margin-top: 1px;
 }
 
 /* ===== 認証中ステータス ===== */
 .bt-ci-status {
-  margin: 12px 0 4px;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 800;
-  color: #fff;
-  min-height: 22px;
+  color: var(--bt-ci-yellow);
+  min-height: 20px;
+  text-align: center;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
 }
 
 .bt-ci-status-done {
   color: var(--bt-ci-yellow);
-}
-
-/* ===== ボタン ===== */
-.bt-ci-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 16px;
-}
-
-.bt-ci-btn {
-  flex: 1 1 0;
-  padding: 11px 12px;
-  border-radius: 9px;
-  font-size: 14px;
-  font-weight: 800;
-  cursor: pointer;
-  border: 2px solid transparent;
-  transition: transform 0.05s ease, opacity 0.15s ease;
-}
-
-.bt-ci-btn:active { transform: translateY(1px); }
-
-.bt-ci-btn-cancel {
-  background: #2b2b2b;
-  color: #eee;
-  border-color: #555;
-}
-
-.bt-ci-btn-ok {
-  background: var(--bt-ci-yellow);
-  color: var(--bt-ci-black);
-  border-color: var(--bt-ci-red);
-}
-
-.bt-ci-btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
 }
 
 /* ===== Badge（Merge ボタン横） ===== */

@@ -10,9 +10,28 @@
   "use strict";
 
   /**
+   * 拡張 context が生きているか。拡張をリロードすると、開きっぱなしの
+   * タブに残った古い content script からは context が無効化され、
+   * chrome.runtime.id が undefined になり sendMessage は
+   * "Extension context invalidated" を投げる。先に弾いて黙って諦める。
+   * @returns {boolean}
+   */
+  function isExtensionAlive() {
+    try {
+      return !!(chrome && chrome.runtime && chrome.runtime.id);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /**
    * @param {string} prKey 例: "owner/repo#123"
    */
   function notifyLauncher(prKey) {
+    // context 無効（拡張リロード後の古いタブ等）なら何もしない。
+    // Merge 演出は止めない設計なので、ここは静かに諦めるのが正しい。
+    if (!isExtensionAlive()) return;
+
     try {
       chrome.runtime.sendMessage(
         { type: "bt-ci:launcher", pr: prKey },
@@ -26,7 +45,8 @@
         }
       );
     } catch (e) {
-      console.warn("[ThunderCaptcha] launcher message threw:", e);
+      // context invalidated 等。Merge 演出は止めないので握りつぶす。
+      console.debug("[ThunderCaptcha] launcher message skipped:", e && e.message);
     }
   }
 

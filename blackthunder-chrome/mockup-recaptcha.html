@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ThunderCaptcha — reCAPTCHA v2 チェックボックス風 モックアップ</title>
+<style>
+  :root {
+    /* ブラックサンダー パレット（既存 thundercaptcha.css と同じ） */
+    --bt-yellow: rgb(255, 211, 0);   /* Thunder Yellow */
+    --bt-red: rgb(230, 0, 18);       /* Thunder Red */
+    --bt-black: #0a0a0a;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+    background: radial-gradient(1200px 600px at 50% -10%, #2a2a2a, #0c0c0c 60%);
+    font-family: Roboto, "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN",
+      "Yu Gothic", Meiryo, sans-serif;
+    color: #eee;
+    padding: 48px 16px;
+  }
+
+  .note {
+    max-width: 520px;
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #bdbdbd;
+  }
+  .note b { color: var(--bt-yellow); }
+
+  /* ============ reCAPTCHA v2 風 チェックボックス ウィジェット ============ */
+  .tc {
+    width: 320px;
+    min-height: 76px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--bt-black);
+    border: 2px solid var(--bt-yellow);
+    border-radius: 6px;
+    box-shadow: 0 0 0 3px rgba(230, 0, 18, 0.45), 0 6px 18px rgba(0, 0, 0, 0.5);
+    user-select: none;
+    cursor: pointer;
+  }
+
+  /* --- 左の四角いチェックボックス --- */
+  .tc-box {
+    flex: 0 0 auto;
+    width: 30px;
+    height: 30px;
+    border: 2px solid #9a9a9a;
+    border-radius: 3px;
+    background: #fff;
+    position: relative;
+    transition: border-radius 0.2s ease;
+  }
+  /* 押した直後のグルグル（reCAPTCHA のスピナー） */
+  .tc-box.loading {
+    border-color: transparent;
+    background: transparent;
+  }
+  .tc-box.loading::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: 3px solid rgba(255, 211, 0, 0.25);
+    border-top-color: var(--bt-yellow);
+    border-radius: 50%;
+    animation: tc-spin 0.7s linear infinite;
+  }
+  @keyframes tc-spin { to { transform: rotate(360deg); } }
+  /* チェック済み（金地に黒いチェック）。枠は reCAPTCHA 風にポップ。 */
+  .tc-box.checked {
+    background: var(--bt-yellow);
+    border-color: var(--bt-red);
+    border-radius: 50%;
+    animation: tc-box-pop 0.28s ease-out;
+  }
+  @keyframes tc-box-pop {
+    0% { transform: scale(0.7); }
+    55% { transform: scale(1.12); }
+    100% { transform: scale(1); }
+  }
+  /* 線を描くように現れるチェックマーク（reCAPTCHA 風） */
+  .tc-check-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .tc-check-svg polyline {
+    fill: none;
+    stroke: var(--bt-black);
+    stroke-width: 3.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 26;
+    stroke-dashoffset: 26;
+    animation: tc-check-draw 0.34s 0.06s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+  }
+  @keyframes tc-check-draw { to { stroke-dashoffset: 0; } }
+
+  /* --- 中央のラベル --- */
+  .tc-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 14px;
+    line-height: 1.35;
+    color: #fff;
+    overflow-wrap: anywhere;
+  }
+
+  /* --- 右のブランド（ロゴ + 文字） --- */
+  .tc-brand {
+    flex: 0 0 auto;
+    text-align: center;
+    color: #cfcfcf;
+    white-space: nowrap;
+  }
+  .tc-brand img {
+    width: 34px;
+    height: 34px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto 2px;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+  }
+  .tc-brand .logo-fallback {
+    font-size: 28px;
+    line-height: 34px;
+  }
+  .tc-brand .name {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--bt-yellow);
+    letter-spacing: -0.2px;
+  }
+  .tc-brand .terms {
+    font-size: 8px;
+    color: #888;
+    margin-top: 1px;
+  }
+
+  .status {
+    text-align: center;
+    font-size: 13px;
+    min-height: 18px;
+    color: var(--bt-yellow);
+    font-weight: 700;
+  }
+</style>
+</head>
+<body>
+
+  <div class="note">
+    <b>実装前イメージ</b>：reCAPTCHA v2 の「私はロボットではありません」チェックボックスに
+    寄せた ThunderCaptcha。配色はブラックサンダー（黒×金×赤）、右のロゴは
+    ブラックサンダーに差し替え。チェックをクリックすると
+    グルグル → ✓ → 認証完了 の流れです。
+  </div>
+
+  <div class="tc" id="tc">
+    <div class="tc-box" id="box"></div>
+    <div class="tc-label">私はブラックサンダーを食べました</div>
+    <div class="tc-brand">
+      <img src="src/assets/logo.png" alt="Black Thunder"
+           onerror="this.outerHTML='<div class=&quot;logo-fallback&quot;>🍫⚡</div>'" />
+      <div class="name">ThunderCaptcha</div>
+      <div class="terms">プライバシー・規約</div>
+    </div>
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <script>
+    var tc = document.getElementById("tc");
+    var box = document.getElementById("box");
+    var status = document.getElementById("status");
+    var state = "idle"; // idle -> loading -> checked
+
+    tc.addEventListener("click", function () {
+      if (state !== "idle") return;
+      state = "loading";
+      box.classList.add("loading");
+      status.textContent = "🍫 ザクザク確認中...";
+
+      setTimeout(function () {
+        box.classList.remove("loading");
+        box.classList.add("checked");
+        box.innerHTML =
+          '<svg class="tc-check-svg" viewBox="0 0 30 30">' +
+          '<polyline points="7,15.5 13,21 23,9"></polyline></svg>';
+        state = "checked";
+        status.textContent = "✅ Thunder Verified — Merge を再実行します ⚡";
+      }, 1200);
+    });
+  </script>
+</body>
+</html>

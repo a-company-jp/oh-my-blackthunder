@@ -13,10 +13,10 @@
 ## ThunderCaptcha とは
 
 - GitHub PR ページの **Merge / Squash / Rebase / Confirm 系ボタン** を捕捉し、
-  reCAPTCHA 風のパロディ認証モーダルを表示します。
-- チェックボックス「私は黒い雷神を体内にデプロイしました」を ON にして
-  「ザクザク認証してMerge」を押すと、段階的なステータス表示のあと、
-  元の Merge 操作が再実行されます。
+  reCAPTCHA v2 の「私はロボットではありません」ウィジェットに寄せた
+  パロディ認証 UI を表示します（配色はブラックサンダーの黒×金×赤）。
+- チェックボックス「私はブラックサンダーを食べました」をクリックすると、
+  グルグル（確認中）→ ✅ Thunder Verified のあと、元の Merge 操作が再実行されます。
 - 認証後はブラックサンダーが画面に降り、`⚡ MERGED! BLACK THUNDER DEPLOYED ⚡`
   のトーストが出ます。
 - （オプション）認証後に Raspberry Pi 等の **物理 Launcher** へ HTTP POST できます。
@@ -28,7 +28,7 @@
 1. 拡張を読み込んだ状態で `https://github.com/<owner>/<repo>/pull/<番号>` を開く。
 2. Merge ボタンの横に **`⚡ Thunder Protected`** バッジが付きます。
 3. Merge / Squash / Rebase などのボタンを押すと **ThunderCaptcha** が表示されます。
-4. チェックを入れて「ザクザク認証してMerge」。未チェックの間ボタンは押せません。
+4. チェックボックスをクリックすると認証が走ります（Esc で中断）。
 5. 認証が通ると元の Merge 操作が再実行され、ブラックサンダーが降ってトーストが出ます。
 
 一度認証すると、同じ PR は **30 秒間** モーダルをスキップして Merge 操作を通します
@@ -85,8 +85,8 @@ POST が失敗しても **Merge 操作・画面演出は止まりません**（`
 - [ ] GitHub PR ページを開く
 - [ ] Merge ボタン横に `⚡ Thunder Protected` が出る
 - [ ] Merge ボタンを押すと ThunderCaptcha が出る
-- [ ] チェックしないと認証ボタンが押せない
-- [ ] チェックして認証する（`⚡ 糖分認証中...` → `🍫 ザクザク確認中...` → `✅ Thunder Verified`）
+- [ ] reCAPTCHA v2 風のチェックボックス・ウィジェットが出る（右にブラックサンダーのロゴ）
+- [ ] チェックボックスをクリックすると `🍫 ザクザク確認中...`（グルグル）→ `✅ Thunder Verified`
 - [ ] 元の Merge 操作が再実行される（無限ループしない）
 - [ ] ブラックサンダーが画面に降る
 - [ ] `⚡ MERGED! BLACK THUNDER DEPLOYED ⚡` トーストが表示される

@@ -1,23 +1,48 @@
 /*
- * ThunderCaptcha — 認証モーダル（reCAPTCHA 風パロディ）
+ * ThunderCaptcha — 認証モーダル（reCAPTCHA v2 チェックボックス風パロディ）
  *
  * showThunderCaptcha() を呼ぶと Promise を返す。
- *   - 認証成功（ザクザク認証してMerge）→ resolve(true)
- *   - 中断（まだ食べていません / Esc）         → resolve(false)
+ *   - 認証成功（チェックボックスを押す）→ resolve(true)
+ *   - 中断（Esc）                        → resolve(false)
+ *
+ * 見た目は reCAPTCHA v2 の「私はロボットではありません」ウィジェットに寄せ、
+ * 配色はブラックサンダー（黒×金×赤）。右のロゴはブラックサンダーに差し替え。
  *
  * DOM 依存のためブラウザでのみ動作。self.BTCI に載せる。
  */
 (function (root) {
   "use strict";
 
-  var STEPS = ["⚡ 糖分認証中...", "🍫 ザクザク確認中...", "✅ Thunder Verified"];
-  var STEP_MS = 600;
+  // チェック後の演出ステップ（ローディング → 確認済み）。
+  var LOADING_MS = 1100; // グルグル表示時間
+  var DONE_MS = 700; // ✅ を見せてから閉じるまで
 
   function el(tag, className, text) {
     var n = document.createElement(tag);
     if (className) n.className = className;
     if (text != null) n.textContent = text;
     return n;
+  }
+
+  function assetUrl(path) {
+    try {
+      return chrome.runtime.getURL(path);
+    } catch (e) {
+      return "";
+    }
+  }
+
+  // reCAPTCHA 風に「線を描く」チェックマーク（SVG）。
+  // CSS 側で stroke-dashoffset をアニメートして描画する。
+  function makeCheckSvg() {
+    var ns = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("class", "bt-ci-check-svg");
+    svg.setAttribute("viewBox", "0 0 30 30");
+    var poly = document.createElementNS(ns, "polyline");
+    poly.setAttribute("points", "7,15.5 13,21 23,9");
+    svg.appendChild(poly);
+    return svg;
   }
 
   /**
@@ -32,63 +57,57 @@
       }
 
       var settled = false;
+      var state = "idle"; // idle -> loading -> checked
+
       var overlay = el("div", "bt-ci-overlay");
-      var modal = el("div", "bt-ci-modal");
-      overlay.appendChild(modal);
+      var widget = el("div", "bt-ci-widget");
+      widget.setAttribute("role", "checkbox");
+      widget.setAttribute("aria-checked", "false");
+      widget.tabIndex = 0;
 
-      var title = el("div", "bt-ci-title", "⚡ BLACK THUNDER CAPTCHA");
-      var lead = el("div", "bt-ci-lead", "Merge前の糖分確認です。");
-      var question = el(
-        "div",
-        "bt-ci-question",
-        "あなたは本当にブラックサンダーを食べましたか？"
-      );
+      // 左：四角いチェックボックス（グルグル / ✓ を内部で出す）
+      var box = el("div", "bt-ci-box");
 
-      // reCAPTCHA 風チェックボックス行
-      var checkRow = el("label", "bt-ci-check");
-      var checkbox = el("input", "bt-ci-checkbox");
-      checkbox.type = "checkbox";
-      var checkBox = el("span", "bt-ci-checkbox-box");
-      var checkLabel = el(
-        "span",
-        "bt-ci-check-label",
-        "私は黒い雷神を体内にデプロイしました"
-      );
-      var checkLogo = el("span", "bt-ci-check-logo", "🍫⚡");
-      checkRow.appendChild(checkbox);
-      checkRow.appendChild(checkBox);
-      checkRow.appendChild(checkLabel);
-      checkRow.appendChild(checkLogo);
+      // 中央：ラベル
+      var label = el("div", "bt-ci-label", "私はブラックサンダーを食べました");
 
-      var notice = el(
-        "div",
-        "bt-ci-notice",
-        "食べていない場合、Mergeできません。"
-      );
+      // 右：ブランド（ロゴ + 名前 + 規約）
+      var brand = el("div", "bt-ci-brand");
+      var logoUrl = assetUrl("src/assets/logo.png");
+      if (logoUrl) {
+        var img = el("img", "bt-ci-brand-logo");
+        img.src = logoUrl;
+        img.alt = "Black Thunder";
+        img.draggable = false;
+        img.addEventListener("error", function () {
+          var fb = el(
+            "div",
+            "bt-ci-brand-logo bt-ci-brand-logo-fallback",
+            "🍫⚡"
+          );
+          if (img.parentNode) img.parentNode.replaceChild(fb, img);
+        });
+        brand.appendChild(img);
+      } else {
+        brand.appendChild(
+          el("div", "bt-ci-brand-logo bt-ci-brand-logo-fallback", "🍫⚡")
+        );
+      }
+      brand.appendChild(el("div", "bt-ci-brand-name", "ThunderCaptcha"));
+      brand.appendChild(el("div", "bt-ci-brand-terms", "プライバシー・規約"));
 
+      widget.appendChild(box);
+      widget.appendChild(label);
+      widget.appendChild(brand);
+
+      // ウィジェット下のステータス行
       var status = el("div", "bt-ci-status");
-      status.style.display = "none";
+      status.style.visibility = "hidden";
 
-      var actions = el("div", "bt-ci-actions");
-      var cancelBtn = el("button", "bt-ci-btn bt-ci-btn-cancel", "まだ食べていません");
-      cancelBtn.type = "button";
-      var okBtn = el(
-        "button",
-        "bt-ci-btn bt-ci-btn-ok",
-        "ザクザク認証してMerge"
-      );
-      okBtn.type = "button";
-      okBtn.disabled = true; // チェックされるまで無効
-      actions.appendChild(cancelBtn);
-      actions.appendChild(okBtn);
-
-      modal.appendChild(title);
-      modal.appendChild(lead);
-      modal.appendChild(question);
-      modal.appendChild(checkRow);
-      modal.appendChild(notice);
-      modal.appendChild(status);
-      modal.appendChild(actions);
+      var stack = el("div", "bt-ci-stack");
+      stack.appendChild(widget);
+      stack.appendChild(status);
+      overlay.appendChild(stack);
 
       function cleanup(result) {
         if (settled) return;
@@ -103,43 +122,44 @@
           e.preventDefault();
           e.stopPropagation();
           cleanup(false);
+        } else if (
+          (e.key === "Enter" || e.key === " " || e.key === "Spacebar") &&
+          state === "idle"
+        ) {
+          e.preventDefault();
+          verify();
         }
       }
 
-      checkbox.addEventListener("change", function () {
-        okBtn.disabled = !checkbox.checked;
-        checkRow.classList.toggle("bt-ci-checked", checkbox.checked);
-      });
+      function verify() {
+        if (state !== "idle") return;
+        state = "loading";
+        box.classList.add("bt-ci-box-loading");
+        status.style.visibility = "visible";
+        status.classList.remove("bt-ci-status-done");
+        status.textContent = "🍫 ザクザク確認中...";
 
-      cancelBtn.addEventListener("click", function () {
-        cleanup(false);
-      });
-
-      okBtn.addEventListener("click", function () {
-        if (okBtn.disabled) return;
-        // 多重クリック防止
-        okBtn.disabled = true;
-        cancelBtn.disabled = true;
-        checkbox.disabled = true;
-        status.style.display = "block";
-        runSteps(0);
-      });
-
-      function runSteps(i) {
-        if (i >= STEPS.length) {
-          cleanup(true);
-          return;
-        }
-        status.textContent = STEPS[i];
-        status.classList.toggle("bt-ci-status-done", i === STEPS.length - 1);
         setTimeout(function () {
-          runSteps(i + 1);
-        }, STEP_MS);
+          box.classList.remove("bt-ci-box-loading");
+          box.classList.add("bt-ci-box-checked");
+          box.appendChild(makeCheckSvg());
+          widget.setAttribute("aria-checked", "true");
+          state = "checked";
+          status.classList.add("bt-ci-status-done");
+          status.textContent = "✅ Thunder Verified";
+          setTimeout(function () {
+            cleanup(true);
+          }, DONE_MS);
+        }, LOADING_MS);
       }
+
+      widget.addEventListener("click", function () {
+        verify();
+      });
 
       // overlay 外クリックでは閉じない（クリックを飲み込むだけ）
       overlay.addEventListener("click", function (e) {
-        if (e.target === overlay) {
+        if (e.target === overlay || e.target === stack) {
           e.preventDefault();
           e.stopPropagation();
         }
@@ -147,7 +167,7 @@
 
       document.addEventListener("keydown", onKey, true);
       document.body.appendChild(overlay);
-      checkbox.focus();
+      widget.focus();
     });
   }
 
