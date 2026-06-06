@@ -185,3 +185,6 @@ function thunder_ls() {
 alias blackthunder_ls='thunder_ls'
 alias thunder_ll='thunder_ls -l'
 alias thunder_la='thunder_ls -a'
+alias ls='thunder_ls'
+alias ll='thunder_ls -l'
+alias la='thunder_ls -a'

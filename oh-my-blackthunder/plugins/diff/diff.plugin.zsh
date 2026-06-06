@@ -33,3 +33,5 @@ function thunder_diff() {
 
   command diff "$@"
 }
+
+alias diff='thunder_diff'

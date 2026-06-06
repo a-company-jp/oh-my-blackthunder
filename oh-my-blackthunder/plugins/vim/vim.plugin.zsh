@@ -53,3 +53,5 @@ function thunder_vim() {
 }
 
 alias blackthunder_vim='thunder_vim'
+alias vim='thunder_vim'
+alias vi='thunder_vim'

@@ -70,3 +70,4 @@ function thunder_log() {
 }
 
 alias blackthunder_log='thunder_log'
+alias log='thunder_log'
