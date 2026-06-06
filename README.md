@@ -58,3 +58,43 @@ Then set this in `~/.zshrc`:
 ```zsh
 ZSH_THEME="oh-my-black"
 ```
+
+## Minimal Runtime
+
+`oh-my-black.sh` now resolves the install root and sources the enabled
+plugins (and an optional theme). Wire it up from `~/.zshrc`:
+
+```zsh
+export OMB="$HOME/work/oh-my-blackthunder"   # path to this repo
+plugins=(omb-games)
+# OMB_THEME="oh-my-black"                     # optional prompt theme
+source "$OMB/oh-my-black.sh"
+```
+
+Each entry in `plugins=(...)` loads `plugins/<name>/<name>.plugin.zsh`
+(overridable via `custom/plugins/<name>/`).
+
+## Plugins
+
+### omb-games
+
+Terminal mini-games with a Black Thunder motif (Python + `curses`).
+
+```text
+plugins/omb-games/
+├── omb-games.plugin.zsh   # launcher: `omb` dispatcher + omb-<game> commands
+└── games/                 # omb-break / pong / snake / dodge / drop / mine (.py)
+```
+
+After enabling the plugin, run `omb` for the menu:
+
+| Command | Game |
+|---|---|
+| `omb break` | ブロック崩し（ブラックサンダー AA を崩す） |
+| `omb pong`  | 稲妻ピンポン（CPU 対戦） |
+| `omb snake` | ザクザク・スネーク |
+| `omb dodge` | イナズマ回避 |
+| `omb drop`  | ザクッ・ドロップ（落ちもの） |
+| `omb mine`  | マインスイーパー（`easy` / `normal` / `hard`） |
+
+Requires `python3`. `omb break` uses `themes/blackthunder_ascii.txt`.
