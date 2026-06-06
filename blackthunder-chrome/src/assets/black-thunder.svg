@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="160" height="100" viewBox="0 0 160 100" role="img" aria-label="BLACK THUNDER">
-  <rect x="2" y="2" width="156" height="96" rx="10" fill="#000000" stroke="#E60012" stroke-width="4"/>
-  <!-- thunder bolt -->
-  <path d="M86 12 L60 56 L78 56 L66 88 L104 44 L84 44 Z" fill="#FFD300" stroke="#000000" stroke-width="2" stroke-linejoin="round"/>
-  <text x="80" y="30" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="15" fill="#FFD300">BLACK</text>
-  <text x="80" y="80" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="15" fill="#FFFFFF">THUNDER</text>
-</svg>

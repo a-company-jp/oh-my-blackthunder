@@ -14,7 +14,6 @@ config) live at the root.
 | App | Description |
 |---|---|
 | [`oh-my-blackthunder/`](./oh-my-blackthunder/) | A tiny zsh framework (themes, plugins, games, AI usage meters) inspired by Oh My Zsh. See its [README](./oh-my-blackthunder/README.md). |
-| [`blackthunder-chrome/`](./blackthunder-chrome/) | **ThunderCaptcha** — a Chrome (MV3) extension that gates GitHub PR merges behind a Black Thunder "snack verification" captcha, then rains Black Thunders. See its [README](./blackthunder-chrome/README.md). |
 
 > More apps will be added as sibling directories at the repository root.
 
