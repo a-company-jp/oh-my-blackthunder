@@ -138,19 +138,23 @@ export class Sidebar implements vscode.WebviewViewProvider {
     .prog-result { font-weight: 800; min-height: 1.2em; margin-top: 6px; font-size: 13px; }
     .prog.done .prog-result { color: var(--bt-gold); text-shadow: 0 0 10px rgba(245,197,24,.5); }
     .prog.fail .prog-result { color: var(--bt-red); }
-    /* コミットの草 */
+    /* コミットチョコ（マス目を板チョコのブロック風に） */
     .stats { font-size: 12px; color: var(--bt-cream); margin: 2px 0 8px; }
     .stats b { color: var(--bt-gold); font-weight: 800; }
     .grass { display: flex; gap: 3px; justify-content: center; overflow-x: auto;
       padding: 4px 2px 6px; }
     .gcol { display: flex; flex-direction: column; gap: 3px; }
-    .gcell { width: 11px; height: 11px; border-radius: 2px; background: #19130e; }
-    .gcell.l0 { background: #19130e; }
-    .gcell.l1 { background: #5e4a05; }
-    .gcell.l2 { background: #a87e00; }
-    .gcell.l3 { background: var(--bt-gold); }
-    .gcell.l4 { background: var(--bt-red); box-shadow: 0 0 4px rgba(227,0,27,.7); }
-    .gcell.empty { background: transparent; }
+    /* 板チョコの一片っぽく: 上に淡いハイライト、下に影でぷっくり見せる */
+    .gcell { width: 11px; height: 11px; border-radius: 2px; background: #140d08;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.10), inset 0 -1px 1px rgba(0,0,0,.45); }
+    .gcell.l0 { background: #140d08; }
+    .gcell.l1 { background: #3a2415; }
+    .gcell.l2 { background: #5c3a1f; }
+    .gcell.l3 { background: #8a5a2b; }
+    .gcell.l4 { background: #b97a3c;
+      box-shadow: inset 0 1px 0 rgba(255,225,180,.25), inset 0 -1px 1px rgba(0,0,0,.45),
+        0 0 4px rgba(245,197,24,.45); }
+    .gcell.empty { background: transparent; box-shadow: none; }
     .gcell.today { outline: 1px solid var(--bt-gold-soft); outline-offset: 1px; }
     .legend { font-size: 10px; color: var(--bt-cream); opacity: .7;
       display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 2px; }
@@ -165,7 +169,6 @@ export class Sidebar implements vscode.WebviewViewProvider {
     <span class="spark">⚡</span>
   </div>
   <div class="slogan" id="slogan"></div>
-  <button id="eat">ザクッと味見 🍫</button>
 
   <div class="prog" id="prog" hidden>
     <div class="prog-label" id="progLabel">ビルド中…</div>
@@ -176,7 +179,7 @@ export class Sidebar implements vscode.WebviewViewProvider {
     <div class="prog-result" id="progResult"></div>
   </div>
 
-  <h3>コミットの草 ⚡</h3>
+  <h3>コミットチョコ ⚡</h3>
   <div class="stats" id="stats"></div>
   <div id="grassWrap"><div class="grass" id="grass"></div></div>
   <div class="legend" id="legend"></div>
@@ -185,7 +188,6 @@ export class Sidebar implements vscode.WebviewViewProvider {
     const vscode = acquireVsCodeApi();
     function eat() { vscode.postMessage({ type: 'eat' }); }
     document.getElementById('bolt').addEventListener('click', eat);
-    document.getElementById('eat').addEventListener('click', eat);
 
     function level(count, max) {
       if (count <= 0) return 0;
@@ -202,7 +204,7 @@ export class Sidebar implements vscode.WebviewViewProvider {
       const legend = document.getElementById('legend');
       if (!g || !g.hasRepo) {
         stats.textContent = '';
-        grass.parentElement.innerHTML = '<div class="norepo">gitリポジトリが見つかりません。<br>このフォルダで git init するとコミットの草が育ちます🌱</div>';
+        grass.parentElement.innerHTML = '<div class="norepo">gitリポジトリが見つかりません。<br>このフォルダで git init するとコミットチョコが増えます🍫</div>';
         legend.innerHTML = '';
         return;
       }

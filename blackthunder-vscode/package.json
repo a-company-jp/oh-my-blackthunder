@@ -2,9 +2,14 @@
   "name": "blackthunder",
   "displayName": "ブラックサンダー / Black Thunder",
   "description": "gitのコミットを「ブラックサンダーの草」として表示し、コミットするとザクザク音が鳴る、おやつ系VSCode拡張機能。",
-  "version": "0.2.1",
+  "version": "0.4.0",
   "publisher": "your-publisher-id",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/a-company-jp/oh-my-blackthunder.git",
+    "directory": "blackthunder-vscode"
+  },
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -40,9 +45,15 @@
       },
       {
         "command": "blackthunder.refreshGrass",
-        "title": "コミットの草を更新",
+        "title": "コミットチョコを更新",
         "category": "Black Thunder",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "blackthunder.formatAndCrunch",
+        "title": "整形してザクッ（フォーマット＋音）",
+        "category": "Black Thunder",
+        "icon": "$(zap)"
       },
       {
         "command": "blackthunder.demoProgress",

@@ -23,6 +23,12 @@ export function repoCwd(): string | undefined {
   return vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
 }
 
+/** 現在の HEAD コミットハッシュを返す（リポジトリでなければ undefined）。 */
+export async function headCommit(cwd: string): Promise<string | undefined> {
+  const out = (await git(cwd, ["rev-parse", "HEAD"])).trim();
+  return out || undefined;
+}
+
 function git(cwd: string, args: string[]): Promise<string> {
   return new Promise((resolve) => {
     cp.execFile(

@@ -11,20 +11,34 @@ export type SoundName = "thunder" | "crunch";
 export class SoundPlayer {
   private files: Partial<Record<SoundName, string>> = {};
 
-  constructor(private readonly storageUri: vscode.Uri) {}
+  constructor(
+    private readonly storageUri: vscode.Uri,
+    private readonly extensionUri: vscode.Uri
+  ) {}
 
-  /** 効果音ファイルを globalStorage に用意する（無ければ生成）。 */
+  /** 効果音ファイルを用意する（同梱音源があれば優先、無ければ生成）。 */
   async init(): Promise<void> {
     await fs.promises.mkdir(this.storageUri.fsPath, { recursive: true });
-    const sounds: Record<SoundName, () => Buffer> = {
-      thunder: buildThunderWav,
-      crunch: buildCrunchWav,
-    };
-    for (const name of Object.keys(sounds) as SoundName[]) {
-      const file = vscode.Uri.joinPath(this.storageUri, `${name}.wav`).fsPath;
-      // 生成ロジック更新時に作り直せるよう毎回書き出す（軽いので問題なし）。
-      await fs.promises.writeFile(file, sounds[name]());
-      this.files[name] = file;
+
+    // thunder（ビルド成功音）はプログラム生成のまま。生成ロジック更新時に
+    // 作り直せるよう毎回書き出す（軽いので問題なし）。
+    const thunderFile = vscode.Uri.joinPath(this.storageUri, "thunder.wav").fsPath;
+    await fs.promises.writeFile(thunderFile, buildThunderWav());
+    this.files.thunder = thunderFile;
+
+    // crunch（コミット音／味見音）は同梱した PIXTA 音源を使う。
+    // 同梱ファイルが見つからない場合のみ、従来の生成音にフォールバックする。
+    const bundled = vscode.Uri.joinPath(
+      this.extensionUri,
+      "media",
+      "pixta_138184860.wav"
+    ).fsPath;
+    if (fs.existsSync(bundled)) {
+      this.files.crunch = bundled;
+    } else {
+      const crunchFile = vscode.Uri.joinPath(this.storageUri, "crunch.wav").fsPath;
+      await fs.promises.writeFile(crunchFile, buildCrunchWav());
+      this.files.crunch = crunchFile;
     }
   }
 
