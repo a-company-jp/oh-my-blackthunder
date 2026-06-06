@@ -1,0 +1,154 @@
+# ============================================================================
+# web-deploy — build, push and deploy zakuzaku-web to Cloud Run on push to main.
+#
+# Authentication is KEYLESS: GitHub OIDC -> Workload Identity Federation, then
+# impersonate the gh-deployer service account. No JSON key anywhere.
+#
+# Required repository Actions VARIABLES (Settings > Secrets and variables >
+# Actions > Variables). All NEXT_PUBLIC_* are PUBLIC config baked into the
+# client bundle, so they live as variables (not secrets):
+#
+#   GCP_PROJECT_ID                          e.g. blackathon
+#   GCP_REGION                              e.g. asia-northeast1
+#   WIF_PROVIDER                            full resource name, e.g.
+#       projects/123456789/locations/global/workloadIdentityPools/github/providers/github
+#   DEPLOYER_SA                             gh-deployer@blackathon.iam.gserviceaccount.com
+#   NEXT_PUBLIC_FIREBASE_API_KEY
+#   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+#   NEXT_PUBLIC_FIREBASE_PROJECT_ID
+#   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+#   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+#   NEXT_PUBLIC_FIREBASE_APP_ID
+#   NEXT_PUBLIC_GITHUB_OAUTH_CLIENT_ID
+#   GITHUB_OAUTH_CLIENT_ID                  server-side copy of the OAuth client id
+#
+# The server secret GITHUB_OAUTH_CLIENT_SECRET is NOT here: it is stored in
+# Secret Manager (secret name GITHUB_OAUTH_CLIENT_SECRET) and mounted into the
+# Cloud Run service as a secret env var at deploy time.
+# ============================================================================
+name: web-deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "web/**"
+      - ".github/workflows/web-deploy.yml"
+
+# Never run two deploys at once; let the latest push win.
+concurrency:
+  group: web-deploy
+  cancel-in-progress: false
+
+# OIDC token minting for Workload Identity Federation.
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  SERVICE: zakuzaku-web
+  REGION: ${{ vars.GCP_REGION }}
+  PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  # asia-northeast1-docker.pkg.dev/<project>/web/zakuzaku-web
+  IMAGE: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/web/zakuzaku-web
+  RUNTIME_SA: zakuzaku-run@blackathon.iam.gserviceaccount.com
+
+jobs:
+  # --------------------------------------------------------------------------
+  # Build + push the image, then roll out a new Cloud Run revision.
+  # --------------------------------------------------------------------------
+  deploy:
+    name: build · push · deploy
+    runs-on: ubuntu-latest
+    outputs:
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud (WIF / keyless)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.DEPLOYER_SA }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ vars.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Build image
+        run: |
+          docker build web/ \
+            --tag "${IMAGE}:${{ github.sha }}" \
+            --tag "${IMAGE}:latest" \
+            --build-arg NEXT_PUBLIC_FIREBASE_API_KEY="${{ vars.NEXT_PUBLIC_FIREBASE_API_KEY }}" \
+            --build-arg NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="${{ vars.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}" \
+            --build-arg NEXT_PUBLIC_FIREBASE_PROJECT_ID="${{ vars.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}" \
+            --build-arg NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="${{ vars.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}" \
+            --build-arg NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="${{ vars.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}" \
+            --build-arg NEXT_PUBLIC_FIREBASE_APP_ID="${{ vars.NEXT_PUBLIC_FIREBASE_APP_ID }}" \
+            --build-arg NEXT_PUBLIC_GITHUB_OAUTH_CLIENT_ID="${{ vars.NEXT_PUBLIC_GITHUB_OAUTH_CLIENT_ID }}"
+
+      - name: Push image
+        run: |
+          docker push "${IMAGE}:${{ github.sha }}"
+          docker push "${IMAGE}:latest"
+
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE }}
+          region: ${{ vars.GCP_REGION }}
+          image: ${{ env.IMAGE }}:${{ github.sha }}
+          service_account: ${{ env.RUNTIME_SA }}
+          env_vars: |
+            NODE_ENV=production
+            GOOGLE_CLOUD_PROJECT=${{ vars.GCP_PROJECT_ID }}
+            GITHUB_OAUTH_CLIENT_ID=${{ vars.GITHUB_OAUTH_CLIENT_ID }}
+          secrets: |
+            GITHUB_OAUTH_CLIENT_SECRET=GITHUB_OAUTH_CLIENT_SECRET:latest
+
+      - name: Smoke test /api/health
+        run: |
+          curl --fail --show-error --silent \
+            --retry 10 --retry-all-errors --retry-delay 6 --max-time 30 \
+            "${{ steps.deploy.outputs.url }}/api/health"
+
+  # --------------------------------------------------------------------------
+  # Deploy Firestore security RULES (only) using the same keyless WIF identity.
+  # NOTE: indexes are deliberately NOT deployed here.
+  # --------------------------------------------------------------------------
+  rules:
+    name: deploy firestore rules
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud (WIF / keyless)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.DEPLOYER_SA }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: Deploy Firestore rules (ADC via WIF)
+        # firebase-tools picks up Application Default Credentials written by the
+        # auth step (GOOGLE_APPLICATION_CREDENTIALS), so no token/login needed.
+        run: pnpm dlx firebase-tools deploy --only firestore:rules --project ${{ vars.GCP_PROJECT_ID }} --non-interactive

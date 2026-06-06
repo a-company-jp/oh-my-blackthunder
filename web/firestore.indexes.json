@@ -1,0 +1,14 @@
+{
+  "comment": "Leaderboard query orders by the single field users.zakuzakuScore (DESC); profile lookup is a single-field equality on loginLower; the activity feed orders by daily.day; team lookups are single-field equality on teams.slugLower / teams.inviteCode — all served by Firestore automatic single-field indexes. The ONE composite index below backs GET /api/me/invites, a COLLECTION-GROUP query combining two equality filters (invitedLoginLower + status) across every teams/{id}/invites subcollection.",
+  "indexes": [
+    {
+      "collectionGroup": "invites",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "invitedLoginLower", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

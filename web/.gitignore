@@ -1,0 +1,22 @@
+# Dependencies / build (anchored to web/ per AGENT.md)
+/node_modules
+/.next
+/out
+/build
+/next-env.d.ts
+/*.tsbuildinfo
+
+# Local env (the committed contract is .env.example)
+/.env
+/.env*.local
+
+# Firebase emulator / tooling state
+/.firebase
+/firebase-debug.log
+/firestore-debug.log
+/ui-debug.log
+/auth-debug.log
+
+# Misc
+/coverage
+.DS_Store
