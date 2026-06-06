@@ -14,6 +14,7 @@ config) live at the root.
 | App | Description |
 |---|---|
 | [`oh-my-blackthunder/`](./oh-my-blackthunder/) | A tiny zsh framework (themes, plugins, games, AI usage meters) inspired by Oh My Zsh. See its [README](./oh-my-blackthunder/README.md). |
+| [`oh-my-blackthunder-jetbrains/`](./oh-my-blackthunder-jetbrains/) | A JetBrains / IntelliJ Platform plugin (Kotlin): reward notifications, an effort counter ("how many Black Thunder bars"), random cheers, a black/yellow/red dark UI theme, and a crunch sound on save. See its [README](./oh-my-blackthunder-jetbrains/README.md). |
 
 > More apps will be added as sibling directories at the repository root.
 

@@ -1,0 +1,14 @@
+# --- Gradle ---
+/.gradle/
+/build/
+/out/
+
+# --- IntelliJ Platform Plugin sandbox / caches ---
+/.intellijPlatform/
+
+# --- IDE project metadata ---
+/.idea/
+*.iml
+
+# --- OS ---
+.DS_Store

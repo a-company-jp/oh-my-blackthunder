@@ -1,0 +1,84 @@
+<idea-plugin>
+    <id>com.yurakuseika.blackthunder.oh-my-blackthunder-jetbrains</id>
+    <name>Oh My Black Thunder</name>
+    <vendor url="https://www.yurakuseika.co.jp">Black Thunder Style</vendor>
+
+    <description><![CDATA[
+        <h2>Oh My Black Thunder ⚡🍫</h2>
+        <p>
+            ブラックサンダー（有楽製菓）にインスパイアされた、開発をちょっと楽しくする
+            JetBrains プラグインです。
+        </p>
+        <ul>
+            <li><b>ご褒美通知</b> — ビルド成功・テスト全グリーンで「ブラックサンダーをどうぞ」通知。</li>
+            <li><b>がんばりカウンター</b> — 保存・ビルド・テストの回数を貯めて「ブラックサンダー何個分」で可視化。</li>
+            <li><b>ランダム応援／名言</b> — 起動時やメニューからランダムな一言で応援。</li>
+            <li><b>見た目テーマ</b> — サンダーイエロー／レッド／ブラックの UI テーマ。</li>
+        </ul>
+    ]]></description>
+
+    <!-- 必須プラットフォーム + ビルド完了監視のために Java プラグインに依存 -->
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.java</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- ご褒美・応援・マイルストーン通知 -->
+        <notificationGroup id="BlackThunder" displayType="BALLOON"/>
+
+        <!-- 起動時のランダム応援 -->
+        <postStartupActivity
+            implementation="com.yurakuseika.blackthunder.startup.ThunderStartupActivity"/>
+
+        <!-- がんばりカウンター ツールウィンドウ -->
+        <toolWindow
+            id="ブラックサンダー"
+            anchor="right"
+            icon="/icons/thunder13.svg"
+            factoryClass="com.yurakuseika.blackthunder.toolwindow.ThunderToolWindowFactory"/>
+
+        <!-- 見た目テーマ -->
+        <themeProvider id="black-thunder-yellow" path="/theme/BlackThunder.theme.json"/>
+
+        <!-- 設定画面（保存時のザクザク音の ON/OFF など） -->
+        <applicationConfigurable
+            parentId="tools"
+            id="com.yurakuseika.blackthunder.settings"
+            displayName="ブラックサンダー⚡"
+            instance="com.yurakuseika.blackthunder.settings.ThunderConfigurable"/>
+    </extensions>
+
+    <applicationListeners>
+        <!-- 保存回数をカウント -->
+        <listener
+            class="com.yurakuseika.blackthunder.listeners.ThunderSaveTracker"
+            topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
+    </applicationListeners>
+
+    <projectListeners>
+        <!-- ビルド成功でご褒美 -->
+        <listener
+            class="com.yurakuseika.blackthunder.listeners.ThunderCompilationListener"
+            topic="com.intellij.openapi.compiler.CompilationStatusListener"/>
+        <!-- テスト全グリーンでご褒美 -->
+        <listener
+            class="com.yurakuseika.blackthunder.listeners.ThunderTestListener"
+            topic="com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener"/>
+    </projectListeners>
+
+    <actions>
+        <action
+            id="BlackThunder.RandomCheer"
+            class="com.yurakuseika.blackthunder.actions.RandomCheerAction"
+            text="ブラックサンダーの一言⚡"
+            description="ランダムな応援メッセージを表示します">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+        <action
+            id="BlackThunder.Crunch"
+            class="com.yurakuseika.blackthunder.actions.CrunchAction"
+            text="ザクッと味見⚡"
+            description="「ザクザク」音を鳴らします">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>
