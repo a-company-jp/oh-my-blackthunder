@@ -16,12 +16,40 @@ OMB_RED='%F{#E60012}'       # サンダーレッド RGB(230,0,18)
 OMB_GREEN='%F{#27C93F}'
 OMB_DIM='%F{#6A6A6A}'
 
+setopt prompt_subst
+
+OMB_THEME_DIR="${${(%):-%x}:A:h}"
+OMB_THEME_ROOT="${OMB:-${OMB_THEME_DIR:h}}"
+
+if (( ! $+functions[_omb_ai_blackthunder_prompt] )) \
+  && [[ -r "$OMB_THEME_ROOT/lib/ai-blackthunder.zsh" ]]; then
+  source "$OMB_THEME_ROOT/lib/ai-blackthunder.zsh"
+fi
+
 # --- git セグメント ------------------------------------------------
 #  OMZ の lib/git.zsh が提供する git_prompt_info をそのまま利用
 ZSH_THEME_GIT_PROMPT_PREFIX="${OMB_GOLD} %F{#FFD300}⎇ "
 ZSH_THEME_GIT_PROMPT_SUFFIX="%f"
 ZSH_THEME_GIT_PROMPT_DIRTY=" ${OMB_RED}✗%f"
 ZSH_THEME_GIT_PROMPT_CLEAN=" ${OMB_GREEN}●%f"
+
+if (( ! $+functions[git_prompt_info] )); then
+  function git_prompt_info() {
+    command git rev-parse --is-inside-work-tree &>/dev/null || return
+
+    local ref state
+    ref="$(command git symbolic-ref --quiet --short HEAD 2>/dev/null \
+      || command git rev-parse --short HEAD 2>/dev/null)" || return
+
+    if [[ -n "$(command git status --porcelain 2>/dev/null)" ]]; then
+      state="$ZSH_THEME_GIT_PROMPT_DIRTY"
+    else
+      state="$ZSH_THEME_GIT_PROMPT_CLEAN"
+    fi
+
+    print -r -n -- "${ZSH_THEME_GIT_PROMPT_PREFIX}${ref}${state}${ZSH_THEME_GIT_PROMPT_SUFFIX}"
+  }
+fi
 
 # --- プロンプト本体 -------------------------------------------------
 #  ⚡ : 直前のコマンドが成功なら金、失敗なら赤  （%(?.成功.失敗)）
@@ -33,11 +61,24 @@ PROMPT+='${OMB_GOLD}◢◣%f'
 PROMPT+='$(git_prompt_info) '
 PROMPT+='%(?.${OMB_GOLD_HOT}.${OMB_RED})❯%f '
 
-# 右側に時刻をうっすら（派手にしたいなら ⚡%* に変えてもOK）
-RPROMPT='${OMB_DIM}%*%f'
+function _omb_right_prompt() {
+  local ai_segment
+
+  if (( $+functions[_omb_ai_blackthunder_prompt] )); then
+    ai_segment="$(_omb_ai_blackthunder_prompt)"
+  fi
+
+  if [[ -n "$ai_segment" ]]; then
+    print -r -n -- "$ai_segment ${OMB_DIM}%*%f"
+  else
+    print -r -n -- "${OMB_DIM}%*%f"
+  fi
+}
+
+# 右側に AI ブラックサンダー換算と時刻をうっすら表示。
+RPROMPT='$(_omb_right_prompt)'
 
 # --- 起動バナー（うるさく派手に。OMB_QUIET=1 で黙る）--------------
-OMB_THEME_DIR="${${(%):-%x}:A:h}"
 OMB_ASCII_FILE="${OMB_ASCII_FILE:-$OMB_THEME_DIR/blackthunder_ascii.txt}"
 OMB_ASCII_118_FILE="${OMB_ASCII_118_FILE:-$OMB_THEME_DIR/blackthunder_ascii_118.txt}"
 OMB_ASCII_79_FILE="${OMB_ASCII_79_FILE:-$OMB_THEME_DIR/blackthunder_ascii_79.txt}"
