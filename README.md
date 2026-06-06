@@ -38,6 +38,8 @@ tools should live before implementing the framework itself.
 ## Status
 
 The first shared theme is available at `themes/oh-my-black.zsh-theme`.
+The `ai-blackthunder` module can show recent AI usage as Black Thunder bars,
+for example `⚡0.7本 (Claude)`.
 
 ## Install The Theme
 
@@ -57,6 +59,34 @@ Then set this in `~/.zshrc`:
 
 ```zsh
 ZSH_THEME="oh-my-black"
+```
+
+## Claude Code Status Line
+
+Claude Code can send status-line JSON to a local command. Oh My Blackthunder
+uses that metadata to calculate how many Black Thunder bars the current Claude
+session has used, then stores only a small cache entry for the prompt.
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "/path/to/oh-my-blackthunder/plugins/ai-blackthunder/omb-claude-statusline.zsh",
+    "padding": 0
+  }
+}
+```
+
+The module stores only timestamp, provider, and calculated bar count in
+`cache/ai-blackthunder/last.tsv`. It does not store prompts, transcripts,
+session IDs, or command output.
+
+Defaults:
+
+```zsh
+OMB_BLACKTHUNDER_PRICE_JPY=43
+OMB_USD_JPY=160
+OMB_AI_BLACKTHUNDER_TTL=600
 ```
 
 ## Minimal Runtime
