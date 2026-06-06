@@ -29,3 +29,4 @@ function thunder_fzf() {
 }
 
 alias blackthunder_fzf='thunder_fzf'
+alias fzf='thunder_fzf'

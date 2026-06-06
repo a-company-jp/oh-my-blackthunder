@@ -158,3 +158,4 @@ function thunder_tree() {
 }
 
 alias blackthunder_tree='thunder_tree'
+alias tree='thunder_tree'

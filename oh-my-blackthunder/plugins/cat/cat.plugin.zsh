@@ -87,3 +87,4 @@ function thunder_cat() {
 }
 
 alias blackthunder_cat='thunder_cat'
+alias cat='thunder_cat'
