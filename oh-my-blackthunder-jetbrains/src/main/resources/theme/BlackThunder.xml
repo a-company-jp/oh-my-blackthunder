@@ -1,0 +1,81 @@
+<scheme name="Black Thunder" version="142" parent_scheme="Darcula">
+  <colors>
+    <option name="CARET_COLOR" value="ffd300"/>
+    <option name="CARET_ROW_COLOR" value="1f1f1f"/>
+    <option name="GUTTER_BACKGROUND" value="161616"/>
+    <option name="LINE_NUMBERS_COLOR" value="6e6e6e"/>
+    <option name="LINE_NUMBER_ON_CARET_ROW_COLOR" value="ffd300"/>
+    <option name="SELECTION_BACKGROUND" value="4a3d00"/>
+    <option name="SELECTION_FOREGROUND" value="f2f2f2"/>
+    <option name="INDENT_GUIDE" value="2e2e2e"/>
+    <option name="RIGHT_MARGIN_COLOR" value="2e2e2e"/>
+    <option name="WHITESPACES" value="3a3a3a"/>
+  </colors>
+  <attributes>
+    <option name="TEXT">
+      <value>
+        <option name="FOREGROUND" value="f2f2f2"/>
+        <option name="BACKGROUND" value="161616"/>
+      </value>
+    </option>
+    <option name="DEFAULT_KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="ffd300"/>
+        <option name="FONT_TYPE" value="1"/>
+      </value>
+    </option>
+    <option name="DEFAULT_STRING">
+      <value>
+        <option name="FOREGROUND" value="ffe066"/>
+      </value>
+    </option>
+    <option name="DEFAULT_NUMBER">
+      <value>
+        <option name="FOREGROUND" value="ff6a6a"/>
+      </value>
+    </option>
+    <option name="DEFAULT_KEYWORD2">
+      <value>
+        <option name="FOREGROUND" value="ffd300"/>
+      </value>
+    </option>
+    <option name="DEFAULT_FUNCTION_DECLARATION">
+      <value>
+        <option name="FOREGROUND" value="ffe066"/>
+      </value>
+    </option>
+    <option name="DEFAULT_INSTANCE_METHOD">
+      <value>
+        <option name="FOREGROUND" value="ffe066"/>
+      </value>
+    </option>
+    <option name="DEFAULT_LINE_COMMENT">
+      <value>
+        <option name="FOREGROUND" value="7d7d7d"/>
+        <option name="FONT_TYPE" value="2"/>
+      </value>
+    </option>
+    <option name="DEFAULT_BLOCK_COMMENT">
+      <value>
+        <option name="FOREGROUND" value="7d7d7d"/>
+        <option name="FONT_TYPE" value="2"/>
+      </value>
+    </option>
+    <option name="DEFAULT_DOC_COMMENT">
+      <value>
+        <option name="FOREGROUND" value="8a8a6a"/>
+      </value>
+    </option>
+    <option name="IDENTIFIER_UNDER_CARET_ATTRIBUTES">
+      <value>
+        <option name="BACKGROUND" value="3a3000"/>
+      </value>
+    </option>
+    <option name="TEXT_SEARCH_RESULT_ATTRIBUTES">
+      <value>
+        <option name="FOREGROUND" value="161616"/>
+        <option name="BACKGROUND" value="ffd300"/>
+      </value>
+    </option>
+  </attributes>
+</scheme>

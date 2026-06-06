@@ -1,0 +1,176 @@
+{
+  "name": "Black Thunder",
+  "author": "Black Thunder Style",
+  "dark": true,
+  "editorScheme": "/theme/BlackThunder.xml",
+  "colors": {
+    "btBlack": "#161616",
+    "btPanel": "#1E1E1E",
+    "btPanelLight": "#262626",
+    "btBorder": "#3A3A3A",
+    "btText": "#F2F2F2",
+    "btTextDim": "#A8A8A8",
+    "btYellow": "#FFD300",
+    "btYellowDim": "#C9A600",
+    "btRed": "#E60012",
+    "btRedDim": "#B0000E",
+    "btSelFg": "#161616"
+  },
+  "ui": {
+    "*": {
+      "background": "btPanel",
+      "foreground": "btText",
+      "infoForeground": "btTextDim",
+      "selectionBackground": "btYellow",
+      "selectionForeground": "btSelFg",
+      "selectionInactiveBackground": "btPanelLight",
+      "selectionInactiveForeground": "btText",
+      "disabledForeground": "btTextDim",
+      "borderColor": "btBorder",
+      "separatorColor": "btBorder",
+      "focusColor": "btYellow",
+      "focusedBorderColor": "btYellow"
+    },
+    "Panel": { "background": "btPanel", "foreground": "btText" },
+    "Label": { "foreground": "btText", "disabledForeground": "btTextDim" },
+    "Viewport": { "background": "btPanel" },
+    "ToolWindow": {
+      "background": "btPanel",
+      "Header": { "background": "btBlack", "inactiveBackground": "btPanel" },
+      "HeaderTab": {
+        "selectedInactiveBackground": "btPanelLight",
+        "underlinedTabBackground": "btPanelLight",
+        "underlineColor": "btYellow",
+        "inactiveUnderlineColor": "btYellowDim"
+      }
+    },
+    "Button": {
+      "background": "btPanelLight",
+      "foreground": "btText",
+      "startBackground": "btPanelLight",
+      "endBackground": "btPanelLight",
+      "startBorderColor": "btBorder",
+      "endBorderColor": "btBorder",
+      "focusedBorderColor": "btYellow",
+      "select": "btYellow",
+      "default": {
+        "startBackground": "btYellow",
+        "endBackground": "btYellowDim",
+        "foreground": "btSelFg",
+        "startBorderColor": "btRed",
+        "endBorderColor": "btRed",
+        "focusColor": "btRed",
+        "focusedBorderColor": "btRed"
+      }
+    },
+    "Component": {
+      "borderColor": "btBorder",
+      "focusedBorderColor": "btYellow",
+      "focusColor": "btYellow"
+    },
+    "TextField": { "background": "btBlack", "foreground": "btText" },
+    "TextArea": { "background": "btBlack", "foreground": "btText" },
+    "PasswordField": { "background": "btBlack", "foreground": "btText" },
+    "ComboBox": {
+      "background": "btBlack",
+      "foreground": "btText",
+      "selectionBackground": "btYellow",
+      "selectionForeground": "btSelFg"
+    },
+    "List": {
+      "background": "btPanel",
+      "foreground": "btText",
+      "selectionBackground": "btYellow",
+      "selectionForeground": "btSelFg",
+      "selectionInactiveBackground": "btPanelLight",
+      "selectionInactiveForeground": "btText"
+    },
+    "Tree": {
+      "background": "btPanel",
+      "foreground": "btText",
+      "selectionBackground": "btYellow",
+      "selectionForeground": "btSelFg",
+      "selectionInactiveBackground": "btPanelLight",
+      "selectionInactiveForeground": "btText",
+      "hash": "btBorder"
+    },
+    "Table": {
+      "background": "btPanel",
+      "foreground": "btText",
+      "gridColor": "btBorder",
+      "selectionBackground": "btYellow",
+      "selectionForeground": "btSelFg"
+    },
+    "TableHeader": { "background": "btBlack", "foreground": "btText", "separatorColor": "btBorder" },
+    "Menu": { "background": "btBlack", "foreground": "btText", "selectionBackground": "btYellow", "selectionForeground": "btSelFg" },
+    "MenuItem": { "background": "btBlack", "foreground": "btText", "selectionBackground": "btYellow", "selectionForeground": "btSelFg", "acceleratorForeground": "btTextDim" },
+    "MenuBar": { "background": "btBlack", "foreground": "btText", "selectionBackground": "btYellow", "selectionForeground": "btSelFg", "borderColor": "btBorder" },
+    "PopupMenu": { "background": "btBlack", "foreground": "btText", "borderColor": "btBorder" },
+    "TabbedPane": {
+      "background": "btPanel",
+      "foreground": "btText",
+      "underlineColor": "btYellow",
+      "contentAreaColor": "btBorder",
+      "focusColor": "btYellowDim",
+      "hoverColor": "btPanelLight"
+    },
+    "EditorTabs": {
+      "background": "btPanel",
+      "underlinedTabBackground": "btBlack",
+      "underlineColor": "btYellow",
+      "inactiveUnderlineColor": "btYellowDim",
+      "hoverBackground": "btPanelLight"
+    },
+    "DefaultTabs": {
+      "background": "btPanel",
+      "underlinedTabBackground": "btBlack",
+      "underlineColor": "btYellow",
+      "hoverBackground": "btPanelLight"
+    },
+    "ScrollBar": { "thumbColor": "btBorder", "hoverThumbColor": "btYellowDim" },
+    "Link": {
+      "activeForeground": "btYellow",
+      "hoverForeground": "btRed",
+      "visitedForeground": "btYellowDim",
+      "pressedForeground": "btRed"
+    },
+    "ProgressBar": {
+      "trackColor": "btPanelLight",
+      "progressColor": "btYellow",
+      "indeterminateStartColor": "btYellow",
+      "indeterminateEndColor": "btRed"
+    },
+    "CheckBox": { "background": "btPanel", "foreground": "btText" },
+    "RadioButton": { "background": "btPanel", "foreground": "btText" },
+    "TitlePane": { "background": "btBlack", "foreground": "btText", "inactiveBackground": "btPanel" },
+    "MainToolbar": { "background": "btBlack", "foreground": "btText" },
+    "NewClass": { "Panel": { "background": "btPanel" } },
+    "Popup": {
+      "Header": { "activeBackground": "btBlack", "inactiveBackground": "btPanel" },
+      "borderColor": "btBorder"
+    },
+    "NavBar": { "background": "btPanel" },
+    "StatusBar": { "background": "btBlack", "foreground": "btTextDim", "borderColor": "btBorder" },
+    "Notification": {
+      "background": "btPanelLight",
+      "foreground": "btText",
+      "borderColor": "btYellow"
+    },
+    "ToolTip": { "background": "btBlack", "foreground": "btText", "borderColor": "btYellow" },
+    "Borders": { "color": "btBorder", "ContrastBorderColor": "btBorder" }
+  },
+  "icons": {
+    "ColorPalette": {
+      "Actions.Grey": "#A8A8A8",
+      "Actions.Blue": "#FFD300",
+      "Actions.Green": "#FFD300",
+      "Actions.Red": "#E60012",
+      "Actions.Yellow": "#FFD300",
+      "Objects.Grey": "#A8A8A8",
+      "Objects.Blue": "#FFD300",
+      "Objects.Green": "#FFD300",
+      "Objects.Yellow": "#FFD300",
+      "Objects.Red": "#E60012"
+    }
+  }
+}
