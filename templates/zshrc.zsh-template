@@ -2,12 +2,12 @@
 # Tip: `tools/install.sh` wires this up for you automatically.
 export OMB="$HOME/.oh-my-blackthunder"
 
-# Optional prompt theme (themes/<name>.zsh-theme). Leave unset to keep your
-# current prompt. The bundled "oh-my-black" theme borrows Oh My Zsh helpers.
-# OMB_THEME="oh-my-black"
+# Optional prompt theme (themes/<name>.zsh-theme).
+OMB_THEME="oh-my-black"
 
 # Enabled plugins (plugins/<name>/<name>.plugin.zsh).
+#   ai-blackthunder … Claude/Codex usageをブラックサンダー本数に換算して表示
 #   omb-games … ターミナルで遊べるブラックサンダー風ミニゲーム集（omb <game>）
-plugins=(omb-games)
+plugins=(ai-blackthunder omb-games)
 
 source "$OMB/oh-my-black.sh"
