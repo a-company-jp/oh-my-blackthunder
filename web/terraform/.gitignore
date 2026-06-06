@@ -1,0 +1,13 @@
+# Terraform working state (anchored to web/terraform/ via leading slash).
+/.terraform/
+/*.tfstate*
+
+# Never commit real variable files (may contain environment specifics).
+/*.tfvars
+!/terraform.tfvars.example
+!/environments/*.tfvars
+
+# Crash logs and plan artifacts.
+/crash.log
+/crash.*.log
+/*.tfplan

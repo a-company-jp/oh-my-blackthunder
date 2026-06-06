@@ -80,6 +80,36 @@ POST 内容:
 `host_permissions` には `raspberrypi.local` / `127.0.0.1` / `localhost` を許可済みです。
 POST が失敗しても **Merge 操作・画面演出は止まりません**（`console.warn` のみ）。
 
+## リーダーボード連携（ブラックサンダーカウント）
+
+ThunderCaptcha 認証を通すたびに、Web サービスの **ブラックサンダーカウント** へ
+「ブラックサンダーを食べた」eat イベントを 1 件記録できます。GitHub アカウントへ
+紐づくので、リーダーボードに自分の摂取数が積み上がります。
+
+- **接続方法**: ツールバーの拡張アイコン（ポップアップ）を開き、「接続する」を押します。
+  Web 側の `/connect` フローが開き、GitHub 認証 → 認可すると不透明な APP TOKEN が
+  発行され、`chrome.storage.local` に保存されます（拡張は GitHub OAuth を自前で持ちません）。
+- **記録タイミング**: 認証成功（`✅ Thunder Verified`）の直後に、background 経由で
+  `<base>/api/ingest` へ `eat` イベントを 1 件 POST します。eventId は毎回新しい
+  UUID（`chrome:<uuid>`）なので、認証 1 回につき 1 カウントです。
+- **best-effort**: 未接続・通信失敗でも **ThunderCaptcha / Merge 演出は止まりません**。
+  成功 / 失敗は画面右上の小さなトーストと console に出るだけです。
+- **解除**: ポップアップの「連携を解除」でトークンを破棄します。
+
+### ベース URL の設定
+
+既定は `https://blackathon.run.app`（プレースホルダ）。本番 URL に合わせて変更してください。
+
+```js
+// 拡張の Service Worker コンソールで
+chrome.storage.local.set({ leaderboardBaseUrl: "https://<your-app>.run.app" })
+```
+
+`host_permissions` に `https://*.run.app/*` を許可済み。別ドメインを使う場合は
+`manifest.json` の `host_permissions` にも追加してください。`identity` 権限と
+`chrome.identity.getRedirectURL()`（`https://<extension-id>.chromiumapp.org/`）を
+`/connect` の `redirect_uri` として使います。
+
 ## デモ用チェックリスト
 
 - [ ] GitHub PR ページを開く
@@ -91,6 +121,9 @@ POST が失敗しても **Merge 操作・画面演出は止まりません**（`
 - [ ] ブラックサンダーが画面に降る
 - [ ] `⚡ MERGED! BLACK THUNDER DEPLOYED ⚡` トーストが表示される
 - [ ] `LAUNCHER_ENDPOINT` 設定時は POST が飛ぶ／空ならスキップ
+- [ ] ポップアップから「接続する」→ GitHub 認証で連携できる
+- [ ] 連携済みなら認証後に `🍫 ブラックサンダーカウント +1` トーストが出る
+- [ ] 未連携でも ThunderCaptcha / Merge 演出は止まらない
 
 ## ディレクトリ構成
 
@@ -102,12 +135,17 @@ blackthunder-chrome/
 │   │   ├── pr-key.js             # getPrKeyFromPathname（純粋）
 │   │   ├── merge-detect.js       # isMergeButtonText 等（純粋）+ DOM 判定
 │   │   ├── verification.js       # 認証済み sessionStorage 管理（純粋 + ラッパ）
-│   │   ├── launcher.js           # background への sendMessage
+│   │   ├── launcher.js           # background への sendMessage（物理 Launcher）
+│   │   ├── leaderboard.js        # background への "bt-ci:eat" ブリッジ + トースト
 │   │   ├── modal.js              # ThunderCaptcha モーダル
 │   │   ├── effects.js            # 降下演出 + トースト
 │   │   └── main.js               # capture listener + MutationObserver + 制御
 │   ├── background/
-│   │   └── service-worker.js     # LAUNCHER_ENDPOINT への POST
+│   │   ├── service-worker.js     # メッセージルータ（Launcher / eat / 接続管理）
+│   │   └── leaderboard.js        # APP TOKEN 取得（/connect）+ /api/ingest 送信
+│   ├── popup/
+│   │   ├── popup.html            # リーダーボード接続 / 解除 UI
+│   │   └── popup.js              # service worker へ接続メッセージ
 │   ├── styles/
 │   │   └── thundercaptcha.css    # bt-ci- prefix のスタイル
 │   └── assets/

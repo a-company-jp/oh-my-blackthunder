@@ -15,8 +15,19 @@ final class ClaudeUsageMonitor {
     /// ブラックサンダー 1 個分のトークン数。
     static let tokensPerBar = 90_000.0
 
+    /// ccusage の 1 日分のトークン使用量。`period` は "yyyy-MM-dd"（ローカル日付）。
+    struct DailyUsage {
+        let period: String   // "yyyy-MM-dd"
+        let tokens: Int
+
+        /// この日のブラックサンダー個数。
+        var bars: Double { Double(tokens) / ClaudeUsageMonitor.tokensPerBar }
+    }
+
     private(set) var totalTokens: Int = 0
     private(set) var todayTokens: Int = 0
+    /// 日別の内訳（古い→新しい順。period は "yyyy-MM-dd"）。リーダーボード同期に使う。
+    private(set) var dailyBreakdown: [DailyUsage] = []
     private(set) var lastUpdated: Date?
     private(set) var lastError: String?
 
@@ -42,9 +53,10 @@ final class ClaudeUsageMonitor {
             let result = self.runCCUsage()
             DispatchQueue.main.async {
                 switch result {
-                case .success(let (total, today)):
-                    self.totalTokens = total
-                    self.todayTokens = today
+                case .success(let parsed):
+                    self.totalTokens = parsed.total
+                    self.todayTokens = parsed.today
+                    self.dailyBreakdown = parsed.daily
                     self.lastError = nil
                     self.lastUpdated = Date()
                 case .failure(let error):
@@ -57,7 +69,14 @@ final class ClaudeUsageMonitor {
 
     // MARK: - 実行
 
-    private func runCCUsage() -> Result<(total: Int, today: Int), CCUsageError> {
+    /// 解析結果。累計 / 今日 / 日別内訳をまとめて返す。
+    private struct ParsedUsage {
+        let total: Int
+        let today: Int
+        let daily: [DailyUsage]
+    }
+
+    private func runCCUsage() -> Result<ParsedUsage, CCUsageError> {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/zsh")
         // ログインシェルで PATH を解決し、npx 経由で ccusage を実行
@@ -85,7 +104,7 @@ final class ClaudeUsageMonitor {
         return parse(data)
     }
 
-    private func parse(_ data: Data) -> Result<(total: Int, today: Int), CCUsageError> {
+    private func parse(_ data: Data) -> Result<ParsedUsage, CCUsageError> {
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             return .failure(CCUsageError(message: "ccusage JSON 解析失敗"))
         }
@@ -93,15 +112,21 @@ final class ClaudeUsageMonitor {
         let totals = json["totals"] as? [String: Any]
         let total = (totals?["totalTokens"] as? NSNumber)?.intValue ?? 0
 
-        var today = 0
+        var breakdown: [DailyUsage] = []
         if let daily = json["daily"] as? [[String: Any]] {
-            let todayString = Self.todayString()
-            if let entry = daily.first(where: { ($0["period"] as? String) == todayString }) {
-                today = (entry["totalTokens"] as? NSNumber)?.intValue ?? 0
+            for entry in daily {
+                guard let period = entry["period"] as? String else { continue }
+                let tokens = (entry["totalTokens"] as? NSNumber)?.intValue ?? 0
+                breakdown.append(DailyUsage(period: period, tokens: tokens))
             }
         }
+        // period 昇順（古い→新しい）に正規化。
+        breakdown.sort { $0.period < $1.period }
 
-        return .success((total, today))
+        let todayString = Self.todayString()
+        let today = breakdown.first(where: { $0.period == todayString })?.tokens ?? 0
+
+        return .success(ParsedUsage(total: total, today: today, daily: breakdown))
     }
 
     private static func todayString() -> String {

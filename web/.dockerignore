@@ -1,0 +1,16 @@
+node_modules
+.next
+out
+build
+.git
+.gitignore
+.env
+.env*.local
+.firebase
+*-debug.log
+terraform
+README.md
+Dockerfile
+.dockerignore
+npm-debug.log*
+.DS_Store

@@ -11,7 +11,8 @@
  * 依存（先に読み込まれた content script が self.BTCI に載せている）:
  *   getPrKeyFromPathname, findMergeElementFromPath, isMergeButtonText,
  *   getButtonText, isDisabled, isCandidate, CANDIDATE_SELECTOR,
- *   isVerified, markVerified, showThunderCaptcha, celebrate, notifyLauncher
+ *   isVerified, markVerified, showThunderCaptcha, celebrate, notifyLauncher,
+ *   notifyEat
  */
 (function () {
   "use strict";
@@ -40,6 +41,14 @@
     }
 
     if (prKey) BTCI.notifyLauncher(prKey);
+
+    // リーダーボードへ「ブラックサンダーを食べた」eat を 1 件記録（best-effort）。
+    // 失敗しても Merge 演出や再クリックは止めない。
+    try {
+      if (BTCI.notifyEat) BTCI.notifyEat();
+    } catch (e) {
+      console.warn("[ThunderCaptcha] notifyEat failed:", e);
+    }
 
     // 元のボタンを bypass フラグ付きで再クリック → 無限ループしない
     bypass.add(targetEl);

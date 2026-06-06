@@ -14,6 +14,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let claudeUsage = ClaudeUsageMonitor()
     private let notifier = HighUsageNotifier()
     private let prefs = Preferences.shared
+    private let leaderboard = LeaderboardClient.shared
 
     private var frames: [NSImage] = []
     private var frameIndex = 0
@@ -21,6 +22,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var animationTimer: Timer?
     private var monitorTimer: Timer?
     private var claudeTimer: Timer?
+    private var leaderboardTimer: Timer?
 
     private var settingsMenu: NSMenu!
 
@@ -49,6 +51,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case showBlackThunder = 24
         case scopeToday = 30
         case scopeTotal = 31
+        case leaderboardStatus = 40
+        case leaderboardConnect = 41
+        case leaderboardSync = 42
+        case leaderboardDisconnect = 43
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -82,7 +88,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             notifier.requestAuthorization()
         }
 
-        claudeUsage.onUpdate = { [weak self] in self?.updateClaudeMenu() }
+        claudeUsage.onUpdate = { [weak self] in
+            self?.updateClaudeMenu()
+            // 使用量が更新されるたび、連携済みなら自動同期する。
+            self?.syncLeaderboardIfConnected()
+        }
+        leaderboard.onStateChange = { [weak self] in self?.refreshLeaderboardMenu() }
         claudeUsage.refresh()
 
         startMonitoring()
@@ -172,6 +183,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         menu.addItem(.separator())
 
+        // --- リーダーボード連携 -------------------------------------------------
+        let lbStatusItem = NSMenuItem(title: "⚡️ 連携状態: —", action: nil, keyEquivalent: "")
+        lbStatusItem.tag = Tag.leaderboardStatus.rawValue
+        lbStatusItem.isEnabled = false
+        menu.addItem(lbStatusItem)
+
+        let lbConnectItem = NSMenuItem(title: "⚡️ リーダーボード連携", action: #selector(connectLeaderboard), keyEquivalent: "")
+        lbConnectItem.tag = Tag.leaderboardConnect.rawValue
+        lbConnectItem.target = self
+        menu.addItem(lbConnectItem)
+
+        let lbSyncItem = NSMenuItem(title: "⚡️ 今すぐ同期", action: #selector(syncLeaderboardNow), keyEquivalent: "")
+        lbSyncItem.tag = Tag.leaderboardSync.rawValue
+        lbSyncItem.target = self
+        menu.addItem(lbSyncItem)
+
+        let lbDisconnectItem = NSMenuItem(title: "⚡️ 連携解除", action: #selector(disconnectLeaderboard), keyEquivalent: "")
+        lbDisconnectItem.tag = Tag.leaderboardDisconnect.rawValue
+        lbDisconnectItem.target = self
+        menu.addItem(lbDisconnectItem)
+
+        menu.addItem(.separator())
+
         let targetMenu = NSMenu()
         for (tag, target) in [(Tag.targetCPU, MonitorTarget.cpu),
                               (Tag.targetMemory, .memory),
@@ -202,6 +236,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsMenu = menu
         refreshMenuStates()
         updateClaudeMenu()
+        refreshLeaderboardMenu()
     }
 
     private func addToggle(to menu: NSMenu, title: String, tag: Tag, action: Selector) {
@@ -277,6 +312,70 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         claudeUsage.refresh()
     }
 
+    // MARK: - リーダーボード連携
+
+    @objc private func connectLeaderboard() {
+        settingsMenu?.item(withTag: Tag.leaderboardStatus.rawValue)?.title = "⚡️ 連携状態: ブラウザで認可中…"
+        leaderboard.connect { [weak self] result in
+            guard let self else { return }
+            switch result {
+            case .success:
+                // 連携直後に最新の使用量を取得して同期する。
+                self.claudeUsage.refresh()
+            case .failure(let error):
+                self.showLeaderboardAlert(title: "連携に失敗しました", message: error.localizedMessage)
+            }
+            self.refreshLeaderboardMenu()
+        }
+    }
+
+    @objc private func syncLeaderboardNow() {
+        guard leaderboard.isConnected else {
+            showLeaderboardAlert(title: "未連携", message: "先にリーダーボード連携を行ってください。")
+            return
+        }
+        settingsMenu?.item(withTag: Tag.leaderboardStatus.rawValue)?.title = "⚡️ 連携状態: 同期中…"
+        // 最新の使用量を取得してから同期（onUpdate 経由で自動同期される）。
+        claudeUsage.refresh()
+    }
+
+    @objc private func disconnectLeaderboard() {
+        leaderboard.disconnect()
+        refreshLeaderboardMenu()
+    }
+
+    /// 連携済みのときだけ同期する。使用量更新・タイマーから呼ばれる。
+    private func syncLeaderboardIfConnected() {
+        guard leaderboard.isConnected else { return }
+        leaderboard.sync(from: claudeUsage) { [weak self] result in
+            guard let self else { return }
+            if case .failure(let error) = result, case .unauthorized = error {
+                self.showLeaderboardAlert(title: "再連携が必要です", message: error.localizedMessage)
+            }
+            self.refreshLeaderboardMenu()
+        }
+    }
+
+    private func refreshLeaderboardMenu() {
+        guard let menu = settingsMenu else { return }
+        let connected = leaderboard.isConnected
+        menu.item(withTag: Tag.leaderboardStatus.rawValue)?.title = "⚡️ 連携状態: \(leaderboard.statusDescription)"
+        menu.item(withTag: Tag.leaderboardConnect.rawValue)?.title =
+            connected ? "⚡️ 再連携" : "⚡️ リーダーボード連携"
+        menu.item(withTag: Tag.leaderboardSync.rawValue)?.isEnabled = connected
+        menu.item(withTag: Tag.leaderboardDisconnect.rawValue)?.isEnabled = connected
+    }
+
+    private func showLeaderboardAlert(title: String, message: String) {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = message
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "OK")
+        NSApp.activate(ignoringOtherApps: true)
+        alert.runModal()
+    }
+
     // MARK: - 監視
 
     private func startMonitoring() {
@@ -291,6 +390,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         RunLoop.main.add(claudeRefresh, forMode: .common)
         claudeTimer = claudeRefresh
+
+        // 連携済みなら定期的に同期（使用量に変化が無くても再送・失敗リトライ用）。
+        let leaderboardSync = Timer(timeInterval: 600, repeats: true) { [weak self] _ in
+            self?.syncLeaderboardIfConnected()
+        }
+        RunLoop.main.add(leaderboardSync, forMode: .common)
+        leaderboardTimer = leaderboardSync
     }
 
     private func updateMonitor() {

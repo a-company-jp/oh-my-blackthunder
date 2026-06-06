@@ -1,0 +1,48 @@
+# ============================================================================
+# terraform.tfvars.example — documented example variable values.
+# Copy to terraform.tfvars (gitignored) for ad-hoc local runs, or use
+# environments/prod.tfvars for the canonical prod values:
+#   terraform apply -var-file=environments/prod.tfvars
+# NEVER put secrets here — the GitHub OAuth client SECRET lives in Secret Manager
+# (added out-of-band), never in any .tfvars file.
+# ============================================================================
+
+# --- GCP placement ----------------------------------------------------------
+project_id         = "blackathon"
+region             = "asia-northeast1"
+firestore_location = "asia-northeast1"
+
+# --- Service / image naming -------------------------------------------------
+service_name     = "zakuzaku-web"
+artifact_repo_id = "web"
+image_name       = "zakuzaku-web"
+
+# Leave as the placeholder for the FIRST apply (before any image is built); CI
+# deploys real images afterwards and Terraform ignores changes to this field.
+container_image = "us-docker.pkg.dev/cloudrun/container/hello"
+
+# --- GitHub (Workload Identity Federation deploy repo) ----------------------
+github_owner = "a-company-jp"
+github_repo  = "oh-my-blackthunder"
+
+# --- Cloud Run sizing -------------------------------------------------------
+min_instances = 0
+max_instances = 3
+cpu           = "1"
+memory        = "512Mi"
+concurrency   = 80
+
+# --- Public GitHub OAuth client id (NOT the secret) -------------------------
+github_oauth_client_id = ""
+
+# --- NEXT_PUBLIC_* Firebase web config (baked at build time by CI) ----------
+# Documented here so CI can read it from Terraform if desired. Not injected into
+# Cloud Run runtime env.
+next_public_firebase = {
+  # NEXT_PUBLIC_FIREBASE_API_KEY             = ""
+  # NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN         = ""
+  # NEXT_PUBLIC_FIREBASE_PROJECT_ID          = "blackathon"
+  # NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET      = ""
+  # NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID = ""
+  # NEXT_PUBLIC_FIREBASE_APP_ID              = ""
+}

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ThunderCaptcha</title>
+    <style>
+      :root {
+        --bt-yellow: rgb(255, 211, 0);
+        --bt-red: rgb(230, 0, 18);
+        --bt-black: #0a0a0a;
+        --bt-ink: #1a1a1a;
+        --bt-white: #f7f7f7;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        width: 300px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", Meiryo,
+          sans-serif;
+        background: var(--bt-black);
+        color: var(--bt-white);
+      }
+      .bt-pop-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 14px 16px 10px;
+        border-bottom: 1px solid rgba(255, 211, 0, 0.25);
+      }
+      .bt-pop-logo {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+      }
+      .bt-pop-title {
+        font-weight: 800;
+        font-size: 15px;
+        color: var(--bt-yellow);
+        letter-spacing: 0.02em;
+      }
+      .bt-pop-body {
+        padding: 14px 16px 16px;
+      }
+      .bt-pop-section-label {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: rgba(255, 255, 255, 0.55);
+        margin-bottom: 6px;
+      }
+      .bt-pop-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+      .bt-pop-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        flex: 0 0 auto;
+      }
+      .bt-pop-dot-on {
+        background: rgb(60, 200, 90);
+        box-shadow: 0 0 0 3px rgba(60, 200, 90, 0.2);
+      }
+      .bt-pop-dot-off {
+        background: var(--bt-red);
+        box-shadow: 0 0 0 3px rgba(230, 0, 18, 0.2);
+      }
+      .bt-pop-base {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.5);
+        word-break: break-all;
+        margin: 6px 0 14px;
+      }
+      .bt-pop-btn {
+        width: 100%;
+        padding: 9px 12px;
+        border-radius: 8px;
+        border: none;
+        font-size: 13px;
+        font-weight: 800;
+        cursor: pointer;
+        letter-spacing: 0.02em;
+      }
+      .bt-pop-btn:disabled {
+        opacity: 0.6;
+        cursor: default;
+      }
+      .bt-pop-btn-primary {
+        background: var(--bt-yellow);
+        color: var(--bt-black);
+      }
+      .bt-pop-btn-danger {
+        background: transparent;
+        color: var(--bt-red);
+        border: 1px solid var(--bt-red);
+        margin-top: 8px;
+      }
+      .bt-pop-msg {
+        margin-top: 10px;
+        font-size: 12px;
+        min-height: 16px;
+        color: rgba(255, 255, 255, 0.7);
+      }
+      .bt-pop-msg-error {
+        color: #ff8a8a;
+      }
+      .bt-pop-footer {
+        font-size: 10px;
+        color: rgba(255, 255, 255, 0.4);
+        padding: 0 16px 12px;
+        line-height: 1.5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bt-pop-header">
+      <img class="bt-pop-logo" src="../assets/logo.png" alt="" />
+      <div class="bt-pop-title">ThunderCaptcha</div>
+    </div>
+    <div class="bt-pop-body">
+      <div class="bt-pop-section-label">リーダーボード連携</div>
+      <div class="bt-pop-status">
+        <span id="dot" class="bt-pop-dot"></span>
+        <span id="statusText">確認中...</span>
+      </div>
+      <div id="baseUrl" class="bt-pop-base"></div>
+
+      <button id="connectBtn" class="bt-pop-btn bt-pop-btn-primary" disabled>
+        接続する
+      </button>
+      <button id="disconnectBtn" class="bt-pop-btn bt-pop-btn-danger" hidden>
+        連携を解除
+      </button>
+
+      <div id="msg" class="bt-pop-msg"></div>
+    </div>
+    <div class="bt-pop-footer">
+      GitHub アカウントを連携すると、認証ごとにブラックサンダーカウントへ +1
+      記録されます。未連携でも ThunderCaptcha は動作します。
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>
