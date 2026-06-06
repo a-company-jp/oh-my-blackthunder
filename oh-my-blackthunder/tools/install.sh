@@ -5,7 +5,7 @@
 #  リポジトリを clone した後に実行すると、環境に合わせて自動配線する:
 #
 #    * Oh My Zsh あり … plugins/themes を $ZSH_CUSTOM に symlink。
-#                       あとは ~/.zshrc の plugins=(... omb-games) と
+#                       あとは ~/.zshrc の plugins=(... omb-games diff fzf) と
 #                       （任意で）ZSH_THEME="oh-my-black" を有効化するだけ。
 #    * Oh My Zsh なし … ~/.zshrc に最小ランタイムの読み込みブロックを
 #                       追記（OMB はこのリポジトリの実パスを自動設定）。
@@ -62,6 +62,13 @@ else
   _warn "python3 が見つかりません。ゲーム（omb <game>）には python3 が必要です。"
 fi
 
+# ---- fzf チェック（thunder_fzf の必須要件）-------------------------
+if command -v fzf >/dev/null 2>&1; then
+  _ok "fzf 検出: $(command -v fzf)"
+else
+  _warn "fzf が見つかりません。thunder_fzf には fzf が必要です。"
+fi
+
 # ---- Oh My Zsh の検出 ----------------------------------------------
 OMZ_DIR="${ZSH:-$HOME/.oh-my-zsh}"
 if [[ -d "$OMZ_DIR" ]]; then
@@ -71,8 +78,10 @@ if [[ -d "$OMZ_DIR" ]]; then
 
   (( PRINT_ONLY )) || mkdir -p "$ZSH_CUSTOM/plugins" "$ZSH_CUSTOM/themes"
 
-  # ゲームプラグイン一式（games/ も含めてディレクトリごと）
+  # プラグイン一式
   _link "$OMB_ROOT/plugins/omb-games" "$ZSH_CUSTOM/plugins/omb-games"
+  _link "$OMB_ROOT/plugins/diff" "$ZSH_CUSTOM/plugins/diff"
+  _link "$OMB_ROOT/plugins/fzf" "$ZSH_CUSTOM/plugins/fzf"
 
   # テーマ + AA ファイル
   _link "$OMB_ROOT/themes/oh-my-black.zsh-theme" "$ZSH_CUSTOM/themes/oh-my-black.zsh-theme"
@@ -83,7 +92,7 @@ if [[ -d "$OMZ_DIR" ]]; then
 
   print
   _say "あと一歩。~/.zshrc を次のように編集してください:"
-  print "    plugins=(... omb-games)        # ← omb-games を追加"
+  print "    plugins=(... omb-games diff fzf) # ← 使いたいプラグインを追加"
   print "    ZSH_THEME=\"oh-my-black\"        # ← 任意（黒×金の稲妻プロンプト）"
   print
   _say "反映:  exec zsh   （または新しいターミナルを開く）"
@@ -100,7 +109,7 @@ else
   block="$MARK_BEGIN
 # Oh My Blackthunder（このブロックは install.sh が管理。手動編集可）
 export OMB=\"$OMB_ROOT\"
-plugins=(omb-games)
+plugins=(omb-games diff fzf)
 # OMB_THEME=\"oh-my-black\"   # 任意のプロンプトテーマ
 [ -r \"\$OMB/oh-my-black.sh\" ] && source \"\$OMB/oh-my-black.sh\"
 $MARK_END"
