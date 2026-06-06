@@ -1,0 +1,4 @@
+model	input_per_m	cached_input_per_m	output_per_m
+gpt-5.5	5.00	0.50	30.00
+gpt-5.4	2.50	0.25	15.00
+gpt-5.4-mini	0.75	0.075	4.50

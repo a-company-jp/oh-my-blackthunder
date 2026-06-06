@@ -4,7 +4,7 @@ function _omb_claude_statusline_main() {
   emulate -L zsh
 
   local script_dir root input fields cost_usd input_tokens output_tokens
-  local price_jpy usd_jpy fallback_tokens bars timestamp cache_dir cache_file tmp_file
+  local price_jpy usd_jpy fallback_tokens bars timestamp cache_dir cache_file provider_dir tmp_file
 
   script_dir="${${(%):-%x}:A:h}"
   root="${script_dir:h:h}"
@@ -82,11 +82,19 @@ function _omb_claude_statusline_main() {
   timestamp="$(date +%s 2>/dev/null)" || return 0
   cache_dir="${OMB_AI_BLACKTHUNDER_CACHE_DIR:-${OMB_CACHE_DIR:-$root/cache}/ai-blackthunder}"
   cache_file="${OMB_AI_BLACKTHUNDER_CACHE_FILE:-$cache_dir/last.tsv}"
+  provider_dir="$cache_dir/providers"
 
-  if mkdir -p "$cache_dir" 2>/dev/null; then
+  if mkdir -p "$cache_dir" "$provider_dir" 2>/dev/null; then
     tmp_file="$cache_file.$$"
     if print -r -- "${timestamp}	Claude	${bars}" > "$tmp_file" 2>/dev/null; then
       mv -f "$tmp_file" "$cache_file" 2>/dev/null || true
+    else
+      rm -f "$tmp_file" 2>/dev/null || true
+    fi
+
+    tmp_file="$provider_dir/Claude.tsv.$$"
+    if print -r -- "${timestamp}	${bars}" > "$tmp_file" 2>/dev/null; then
+      mv -f "$tmp_file" "$provider_dir/Claude.tsv" 2>/dev/null || true
     else
       rm -f "$tmp_file" 2>/dev/null || true
     fi
