@@ -134,9 +134,9 @@ OMB_CODEX_SESSION_AUTO_SCAN=0   # disable prompt-time Codex scans
 plugins (and an optional theme). Wire it up from `~/.zshrc`:
 
 ```zsh
-export OMB="$HOME/work/oh-my-blackthunder"   # path to this repo
+export OMB="$HOME/.oh-my-blackthunder"   # ← your actual clone path
 plugins=(ai-blackthunder omb-games)
-# OMB_THEME="oh-my-black"                     # optional prompt theme
+# OMB_THEME="oh-my-black"                 # optional prompt theme
 source "$OMB/oh-my-black.sh"
 ```
 
