@@ -13,7 +13,8 @@ OMB_THEME="oh-my-black"
 #   fzf … Black Thunder style fzf（thunder_fzf）
 #   log … Black Thunder style log colorizer（thunder_log）
 #   ls … Black Thunder style ls（thunder_ls）
+#   tree … Black Thunder style tree（thunder_tree）
 #   vim … Black Thunder style Vim launcher（thunder_vim）
-plugins=(ai-blackthunder cat diff fzf log ls omb-games vim)
+plugins=(ai-blackthunder cat diff fzf log ls omb-games tree vim)
 
 source "$OMB/oh-my-black.sh"
