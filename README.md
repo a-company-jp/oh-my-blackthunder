@@ -39,7 +39,7 @@ tools should live before implementing the framework itself.
 
 The first shared theme is available at `themes/oh-my-black.zsh-theme`.
 The `ai-blackthunder` module can show recent AI usage as Black Thunder bars,
-for example `⚡0.7本 (Claude)`.
+for example `⚡1.4本 (Claude 0.9 / Codex 0.5)`.
 
 ## Install The Theme
 
@@ -77,8 +77,8 @@ session has used, then stores only a small cache entry for the prompt.
 }
 ```
 
-The module stores only timestamp, provider, and calculated bar count in
-`cache/ai-blackthunder/last.tsv`. It does not store prompts, transcripts,
+The module stores only timestamps, provider names, and calculated bar counts
+under `cache/ai-blackthunder/`. It does not store prompts, transcripts,
 session IDs, or command output.
 
 Defaults:
@@ -89,6 +89,45 @@ OMB_USD_JPY=160
 OMB_AI_BLACKTHUNDER_TTL=600
 ```
 
+## Codex Session Usage
+
+Codex writes local session JSONL files under `~/.codex/sessions/`. In
+interactive shells, the `ai-blackthunder` plugin runs a throttled prompt scan
+that reads only `token_count` events, plus minimal model metadata, to estimate
+Codex usage as Black Thunder bars. No Codex-side config is required.
+
+The monitor stores Codex usage as event rows in
+`cache/ai-blackthunder/events/Codex.tsv`. Claude usage is stored as a provider
+snapshot in `cache/ai-blackthunder/providers/Claude.tsv`, because Claude Code
+can call the status line command repeatedly for the same session. Monitor
+state uses hashed session paths and file offsets; prompts, transcripts,
+session IDs, and command output are not stored. Scans are serialized with a
+small lock directory under the cache so multiple terminals do not update the
+same state file at the same time.
+
+Codex event rows include a deterministic event id, so if a scan writes events
+but exits before saving its file offsets, the next scan can retry without
+double-counting the same `token_count` line. The prompt reader also dedupes
+event ids before summing, making duplicate rows harmless if a filesystem race
+ever leaves them behind.
+
+Codex pricing is kept in `plugins/ai-blackthunder/pricing/codex.tsv` so model
+pricing can be updated without touching the parser. Override it with:
+
+```zsh
+OMB_CODEX_PRICING_FILE=/path/to/codex.tsv
+OMB_CODEX_DEFAULT_MODEL=gpt-5.5
+OMB_CODEX_HOME=$HOME/.codex
+OMB_CODEX_SESSION_DIR=$HOME/.codex/sessions
+OMB_AI_BLACKTHUNDER_WINDOW_SECONDS=18000
+OMB_AI_BLACKTHUNDER_EVENT_RETENTION_SECONDS=18000
+OMB_CODEX_SESSION_PROMPT_SCAN_SECONDS=30
+OMB_CODEX_SESSION_LOCK_WAIT_MS=2000
+OMB_CODEX_SESSION_LOCK_STALE_MS=300000
+OMB_CODEX_SESSION_LOCK_TOUCH_INTERVAL_MS=1000
+OMB_CODEX_SESSION_AUTO_SCAN=0   # disable prompt-time Codex scans
+```
+
 ## Minimal Runtime
 
 `oh-my-black.sh` now resolves the install root and sources the enabled
@@ -96,7 +135,7 @@ plugins (and an optional theme). Wire it up from `~/.zshrc`:
 
 ```zsh
 export OMB="$HOME/work/oh-my-blackthunder"   # path to this repo
-plugins=(omb-games)
+plugins=(ai-blackthunder omb-games)
 # OMB_THEME="oh-my-black"                     # optional prompt theme
 source "$OMB/oh-my-black.sh"
 ```
