@@ -47,6 +47,25 @@ else
   echo "    no frame images found — placeholder frames will be used at runtime"
 fi
 
+# アプリアイコン: Resources/AppIcon.png (正方形, 1024x1024 推奨) から .icns を生成して
+# バンドルへ入れる（Finder / Launchpad / About で表示。メニューバーは別途 Frames）。
+ICON_SRC="./Resources/AppIcon.png"
+if [ -f "$ICON_SRC" ]; then
+  echo "==> generating AppIcon.icns"
+  ICONSET_PARENT="$(mktemp -d)"
+  ICONSET="$ICONSET_PARENT/AppIcon.iconset"
+  mkdir -p "$ICONSET"
+  for size in 16 32 128 256 512; do
+    sips -z "$size" "$size"             "$ICON_SRC" --out "$ICONSET/icon_${size}x${size}.png"    >/dev/null
+    sips -z "$((size * 2))" "$((size * 2))" "$ICON_SRC" --out "$ICONSET/icon_${size}x${size}@2x.png" >/dev/null
+  done
+  iconutil -c icns "$ICONSET" -o "$RES_DIR/AppIcon.icns"
+  rm -rf "$ICONSET_PARENT"
+  echo "    wrote $RES_DIR/AppIcon.icns"
+else
+  echo "    no Resources/AppIcon.png — app will use the default icon"
+fi
+
 cat > "$CONTENTS/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -60,6 +79,10 @@ cat > "$CONTENTS/Info.plist" <<PLIST
     <string>$BUNDLE_ID</string>
     <key>CFBundleExecutable</key>
     <string>$APP_NAME</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>CFBundleIconName</key>
+    <string>AppIcon</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>

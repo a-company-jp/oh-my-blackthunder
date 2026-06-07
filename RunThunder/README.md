@@ -80,6 +80,12 @@ open RunThunder.app
 swift run
 ```
 
+## アプリアイコンを差し替える
+
+`Resources/AppIcon.png`（正方形・1024×1024 推奨）を置き換えて `./build_app.sh` を実行するだけ。
+ビルド時に `sips` + `iconutil` で `AppIcon.icns`（全サイズ）を生成し、バンドルに埋め込みます
+（Finder / Launchpad / About で表示。メニューバーのキャラは別途下記の `Frames`）。
+
 ## 本番のコマ画像に差し替える
 
 `Resources/Frames/` に PNG を入れて `./build_app.sh` を実行するだけ。
