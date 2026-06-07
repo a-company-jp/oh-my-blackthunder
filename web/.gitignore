@@ -20,3 +20,5 @@
 # Misc
 /coverage
 .DS_Store
+
+.claude
