@@ -128,6 +128,11 @@ final class DashboardViewController: NSViewController {
 
     // MARK: - 更新
 
+    /// 「今日のブラックサンダー」のバー画像をランダムに選び直す（表示のたびに変える用）。
+    func shuffleTodayBar() {
+        todayCard.shuffleBar()
+    }
+
     func update(_ snap: SystemSnapshot) {
         let cpu = snap.cpu
         cpuTitle.stringValue = String(format: "CPU: %.1f%%", cpu.total * 100)

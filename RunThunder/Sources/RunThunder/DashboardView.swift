@@ -187,6 +187,19 @@ final class BlackThunderTodayCard: NSView {
         let f = NumberFormatter(); f.numberStyle = .decimal; return f
     }()
 
+    /// ランダム表示するバー画像（4種）。
+    private static let barImages: [NSImage] = ["blackthunder_bar_wi",
+                                               "blackthunder_bar_gusu",
+                                               "blackthunder_bar_niko",
+                                               "blackthunder_bar_ike"]
+        .compactMap { NSImage.bundled($0) }
+
+    /// バー画像をランダムに選び直す。
+    func shuffleBar() {
+        guard let img = Self.barImages.randomElement() else { return }
+        barImage.image = img
+    }
+
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         setup()
@@ -212,7 +225,7 @@ final class BlackThunderTodayCard: NSView {
         titleLabel.font = .systemFont(ofSize: 12, weight: .bold)
         titleLabel.textColor = BlackThunder.ink
 
-        barImage.image = NSImage.bundled("blackthunder_bar_whole")
+        shuffleBar()
         barImage.imageScaling = .scaleProportionallyUpOrDown
         barImage.translatesAutoresizingMaskIntoConstraints = false
         barImage.widthAnchor.constraint(equalToConstant: 96).isActive = true

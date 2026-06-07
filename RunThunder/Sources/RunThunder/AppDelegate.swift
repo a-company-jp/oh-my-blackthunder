@@ -122,6 +122,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         _ = dashboard.view   // アクセスで loadView を走らせ、batteryRow 等を生成（macOS 13 互換）
+        dashboard.shuffleTodayBar()   // 開くたびにバー画像をランダムに
         dashboard.update(snapshot)
         dashboard.updatePreferredSize()
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
