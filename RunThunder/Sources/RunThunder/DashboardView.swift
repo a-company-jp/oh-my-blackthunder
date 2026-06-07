@@ -19,6 +19,14 @@ final class VerticalIconButton: NSButton {
         self.title = ""
         self.image = nil
         bezelStyle = .regularSquare
+        // ホバー/クリック時にセルの「押し込み（push-in）」効果で中身（アイコン・
+        // アバター）が数 px ずれてしまうのを防ぐ。ベゼルは残したまま、内容を
+        // 動かすハイライト挙動だけ無効化する。
+        if let cell = cell as? NSButtonCell {
+            cell.highlightsBy = []     // .pushInCellMask 等を外す＝内容が動かない
+            cell.showsStateBy = []
+        }
+        focusRingType = .none
 
         let config = NSImage.SymbolConfiguration(pointSize: iconPointSize, weight: .regular)
         iconView.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)?
