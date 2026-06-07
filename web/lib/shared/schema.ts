@@ -246,6 +246,7 @@ export interface IngestRequest {
 export interface IngestResponse {
   ok: boolean;
   uid: string;
+  githubId: number; // numeric GitHub id; lets clients build the avatar URL
   login: string;
   applied: number;
   duplicates: number;

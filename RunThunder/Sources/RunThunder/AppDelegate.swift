@@ -75,6 +75,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // ポップオーバー（ダッシュボード）
         dashboard.onOpenActivityMonitor = { [weak self] in self?.openActivityMonitor() }
         dashboard.onQuit = { [weak self] in self?.quit() }
+        dashboard.onToggleLeaderboard = { [weak self] in self?.toggleLeaderboardFromDashboard() }
         popover.behavior = .transient
         popover.contentViewController = dashboard
         // 黒地のブラックサンダー配色に合わせ、枠・矢印もダーク外観に固定する。
@@ -95,7 +96,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // 使用量が更新されるたび、連携済みなら自動同期する。
             self?.syncLeaderboardIfConnected()
         }
-        leaderboard.onStateChange = { [weak self] in self?.refreshLeaderboardMenu() }
+        leaderboard.onStateChange = { [weak self] in
+            self?.refreshLeaderboardMenu()
+            self?.refreshDashboardAccount()
+        }
         claudeUsage.refresh()
 
         startMonitoring()
@@ -124,6 +128,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         _ = dashboard.view   // アクセスで loadView を走らせ、batteryRow 等を生成（macOS 13 互換）
         dashboard.shuffleTodayBar()   // 開くたびにバー画像をランダムに
         dashboard.update(snapshot)
+        refreshDashboardAccount()     // ログイン状態・ユーザー名・アバターを反映
         dashboard.updatePreferredSize()
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         NSApp.activate(ignoringOtherApps: true)
@@ -192,7 +197,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         lbStatusItem.isEnabled = false
         menu.addItem(lbStatusItem)
 
-        let lbConnectItem = NSMenuItem(title: "⚡️ リーダーボード連携", action: #selector(connectLeaderboard), keyEquivalent: "")
+        let lbConnectItem = NSMenuItem(title: "⚡️ GitHubでログイン", action: #selector(connectLeaderboard), keyEquivalent: "")
         lbConnectItem.tag = Tag.leaderboardConnect.rawValue
         lbConnectItem.target = self
         menu.addItem(lbConnectItem)
@@ -202,7 +207,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         lbSyncItem.target = self
         menu.addItem(lbSyncItem)
 
-        let lbDisconnectItem = NSMenuItem(title: "⚡️ 連携解除", action: #selector(disconnectLeaderboard), keyEquivalent: "")
+        let lbDisconnectItem = NSMenuItem(title: "⚡️ ログアウト", action: #selector(disconnectLeaderboard), keyEquivalent: "")
         lbDisconnectItem.tag = Tag.leaderboardDisconnect.rawValue
         lbDisconnectItem.target = self
         menu.addItem(lbDisconnectItem)
@@ -334,7 +339,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func syncLeaderboardNow() {
         guard leaderboard.isConnected else {
-            showLeaderboardAlert(title: "未連携", message: "先にリーダーボード連携を行ってください。")
+            showLeaderboardAlert(title: "未ログイン", message: "先に GitHub でログインしてください。")
             return
         }
         settingsMenu?.item(withTag: Tag.leaderboardStatus.rawValue)?.title = "⚡️ 連携状態: 同期中…"
@@ -345,6 +350,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func disconnectLeaderboard() {
         leaderboard.disconnect()
         refreshLeaderboardMenu()
+    }
+
+    /// ダッシュボードのログイン/ログアウトボタンから呼ばれる。
+    /// 別アクションを起こしたらポップオーバーは閉じる方針なので、まず閉じてから実行する。
+    private func toggleLeaderboardFromDashboard() {
+        popover.performClose(nil)
+        if leaderboard.isConnected {
+            disconnectLeaderboard()
+        } else {
+            connectLeaderboard()
+        }
+    }
+
+    /// ダッシュボードのアカウント行（ログイン状態・ユーザー名・アバター）を更新する。
+    private func refreshDashboardAccount() {
+        dashboard.updateAccount(
+            connected: leaderboard.isConnected,
+            login: leaderboard.login,
+            avatarURL: leaderboard.avatarURL
+        )
     }
 
     /// 連携済みのときだけ同期する。使用量更新・タイマーから呼ばれる。
@@ -362,11 +387,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func refreshLeaderboardMenu() {
         guard let menu = settingsMenu else { return }
         let connected = leaderboard.isConnected
-        menu.item(withTag: Tag.leaderboardStatus.rawValue)?.title = "⚡️ 連携状態: \(leaderboard.statusDescription)"
-        menu.item(withTag: Tag.leaderboardConnect.rawValue)?.title =
-            connected ? "⚡️ 再連携" : "⚡️ リーダーボード連携"
-        menu.item(withTag: Tag.leaderboardSync.rawValue)?.isEnabled = connected
-        menu.item(withTag: Tag.leaderboardDisconnect.rawValue)?.isEnabled = connected
+
+        // ログインボタン: 未ログイン=「GitHubでログイン」、ログイン済み=ユーザー名（あれば）。
+        let connectItem = menu.item(withTag: Tag.leaderboardConnect.rawValue)
+        if connected {
+            connectItem?.title = leaderboard.login.map { "⚡️ @\($0)（ログイン中）" } ?? "⚡️ ログイン中"
+            // ログイン済みのログインボタンは状態表示なので押せなくする。
+            connectItem?.action = nil
+        } else {
+            connectItem?.title = "⚡️ GitHubでログイン"
+            connectItem?.action = #selector(connectLeaderboard)
+            connectItem?.target = self
+        }
+
+        // 状態・同期・ログアウトはログイン時のみ表示（未ログイン時は項目ごと隠す）。
+        let statusItem = menu.item(withTag: Tag.leaderboardStatus.rawValue)
+        statusItem?.isHidden = !connected
+        statusItem?.title = "⚡️ 連携状態: \(leaderboard.statusDescription)"
+
+        menu.item(withTag: Tag.leaderboardSync.rawValue)?.isHidden = !connected
+        menu.item(withTag: Tag.leaderboardDisconnect.rawValue)?.isHidden = !connected
     }
 
     private func showLeaderboardAlert(title: String, message: String) {

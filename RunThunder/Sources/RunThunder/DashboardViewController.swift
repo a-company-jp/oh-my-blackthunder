@@ -6,6 +6,9 @@ final class DashboardViewController: NSViewController {
     /// 「アクティビティモニタを開く」「終了」ボタンの動作。
     var onOpenActivityMonitor: (() -> Void)?
     var onQuit: (() -> Void)?
+    /// リーダーボードへのログイン/ログアウトボタンの動作。
+    /// 未ログイン時はログイン（/connect）を、ログイン済み時はログアウトを起動する。
+    var onToggleLeaderboard: (() -> Void)?
 
     private let dataWidth: CGFloat = 250
 
@@ -30,6 +33,7 @@ final class DashboardViewController: NSViewController {
     private let netDetail = DashboardViewController.detailLabel()
 
     private let todayCard = BlackThunderTodayCard()
+    private let accountBar = AccountBarView()
 
     private var contentStack: NSStackView!
 
@@ -87,7 +91,10 @@ final class DashboardViewController: NSViewController {
         // 「今日のブラックサンダー」カードを一番上・横幅いっぱい（ボタン列含む全幅）に。
         todayCard.translatesAutoresizingMaskIntoConstraints = false
 
-        let outer = NSStackView(views: [todayCard, content])
+        // アカウント行（ログイン/ログアウト）を最上部・全幅に置く。
+        accountBar.onAction = { [weak self] in self?.onToggleLeaderboard?() }
+
+        let outer = NSStackView(views: [accountBar, todayCard, content])
         outer.orientation = .vertical
         outer.alignment = .leading
         outer.spacing = 12
@@ -95,6 +102,7 @@ final class DashboardViewController: NSViewController {
         outer.translatesAutoresizingMaskIntoConstraints = false
         // 同一階層（outer）に入ってから全幅制約を有効化する。
         todayCard.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
+        accountBar.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
 
         // 最背面にブラックサンダーの断面背景を敷く。
         let container = NSView()
@@ -131,6 +139,11 @@ final class DashboardViewController: NSViewController {
     /// 「今日のブラックサンダー」のバー画像をランダムに選び直す（表示のたびに変える用）。
     func shuffleTodayBar() {
         todayCard.shuffleBar()
+    }
+
+    /// アカウント行（ログイン状態・ユーザー名・アバター）を更新する。
+    func updateAccount(connected: Bool, login: String?, avatarURL: URL?) {
+        accountBar.update(connected: connected, login: login, avatarURL: avatarURL)
     }
 
     func update(_ snap: SystemSnapshot) {
