@@ -64,6 +64,7 @@ export interface IngestIdentity {
 /** A compact view of the user doc returned to callers after a write. */
 export interface AppliedUser {
   uid: string;
+  githubId: number;
   login: string;
   totalBars: number;
   zakuzakuScore: number;
@@ -666,6 +667,7 @@ export async function applyEvents(
 
     const user: AppliedUser = {
       uid,
+      githubId: identity.githubId,
       login: identity.login,
       totalBars: newTotalBars,
       zakuzakuScore: newScore,

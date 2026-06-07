@@ -25,8 +25,7 @@ final class LeaderboardClient {
     // MARK: - 設定
 
     /// 連携先ウェブサイトのベース URL（既定値。UserDefaults で上書き可能）。
-    /// デプロイ後に実 URL へ差し替えること。
-    static let defaultBaseURL = "https://zakuzaku-web-PLACEHOLDER.a.run.app"
+    static let defaultBaseURL = "https://zakuzaku-web-wusvc57q7a-an.a.run.app"
 
     /// クライアント識別子（IngestRequest.client / connect の app パラメータ）。
     static let appName = "runthunder"
@@ -45,6 +44,8 @@ final class LeaderboardClient {
         static let appToken = "leaderboard.appToken"
         static let baseURL = "leaderboard.baseURL"
         static let lastSyncedAtMs = "leaderboard.lastSyncedAtMs"
+        static let login = "leaderboard.login"
+        static let githubId = "leaderboard.githubId"
     }
 
     private let defaults = UserDefaults.standard
@@ -98,6 +99,43 @@ final class LeaderboardClient {
         return value > 0 ? value : nil
     }
 
+    /// ログイン中の GitHub ユーザー名。/api/ingest のレスポンスから取得・保存される。
+    /// 連携直後・初回同期前は nil のことがある。
+    private(set) var login: String? {
+        get {
+            let value = defaults.string(forKey: Key.login)
+            return (value?.isEmpty ?? true) ? nil : value
+        }
+        set {
+            if let newValue, !newValue.isEmpty {
+                defaults.set(newValue, forKey: Key.login)
+            } else {
+                defaults.removeObject(forKey: Key.login)
+            }
+        }
+    }
+
+    /// ログイン中の GitHub 数値 ID（アバター URL の生成に使う）。未取得なら nil。
+    private(set) var githubId: Int? {
+        get {
+            let value = defaults.integer(forKey: Key.githubId)
+            return value > 0 ? value : nil
+        }
+        set {
+            if let newValue, newValue > 0 {
+                defaults.set(newValue, forKey: Key.githubId)
+            } else {
+                defaults.removeObject(forKey: Key.githubId)
+            }
+        }
+    }
+
+    /// GitHub アバター画像の URL（数値 ID から生成）。ID 未取得なら nil。
+    var avatarURL: URL? {
+        guard let githubId else { return nil }
+        return URL(string: "https://avatars.githubusercontent.com/u/\(githubId)")
+    }
+
     /// 連携状態の短い説明（メニュー表示用）。
     var statusDescription: String {
         guard isConnected else { return "未連携" }
@@ -111,9 +149,11 @@ final class LeaderboardClient {
         return "連携済み（未同期）"
     }
 
-    /// 連携を解除（トークンを破棄）。
+    /// 連携を解除（トークン・ユーザー情報を破棄）。
     func disconnect() {
         token = nil
+        login = nil
+        githubId = nil
         stopListener()
         DispatchQueue.main.async { [weak self] in self?.onStateChange?() }
     }
@@ -372,10 +412,15 @@ final class LeaderboardClient {
             }
             switch http.statusCode {
             case 200:
+                // レスポンスから GitHub ユーザー名・ID を取り出して保存する
+                // （ログイン中ユーザーのアイコン/名前表示に使う）。失敗しても同期成功扱い。
+                if let data { self.storeIdentity(from: data) }
                 finish(.success(()))
             case 401, 403:
-                // トークンが無効・失効。連携を解除して再連携を促す。
+                // トークンが無効・失効。連携を解除（ユーザー情報も破棄）して再連携を促す。
                 self.token = nil
+                self.login = nil
+                self.githubId = nil
                 finish(.failure(.unauthorized))
             default:
                 let detail = data.flatMap { String(data: $0, encoding: .utf8) } ?? ""
@@ -431,6 +476,27 @@ final class LeaderboardClient {
         let yyyymmdd = period.replacingOccurrences(of: "-", with: "")
         let tsMs = Int(date.timeIntervalSince1970 * 1000)
         return (yyyymmdd, tsMs)
+    }
+
+    /// /api/ingest（IngestResponse）から login と githubId を取り出して保存する。
+    /// 失敗（パース不可・フィールド欠如）しても無視する。main で onStateChange を呼ぶ。
+    private func storeIdentity(from data: Data) {
+        guard
+            let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else { return }
+
+        var changed = false
+        if let login = json["login"] as? String, !login.isEmpty, login != self.login {
+            self.login = login
+            changed = true
+        }
+        if let githubId = json["githubId"] as? Int, githubId > 0, githubId != self.githubId {
+            self.githubId = githubId
+            changed = true
+        }
+        if changed {
+            DispatchQueue.main.async { [weak self] in self?.onStateChange?() }
+        }
     }
 
     // MARK: - ユーティリティ

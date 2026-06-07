@@ -99,6 +99,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     const res: IngestResponse = {
       ok: true,
       uid: user.uid,
+      githubId: user.githubId,
       login: user.login,
       applied,
       duplicates,
