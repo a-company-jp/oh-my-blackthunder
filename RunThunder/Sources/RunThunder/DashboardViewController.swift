@@ -33,7 +33,11 @@ final class DashboardViewController: NSViewController {
     private let netDetail = DashboardViewController.detailLabel()
 
     private let todayCard = BlackThunderTodayCard()
-    private let accountBar = AccountBarView()
+
+    /// ログイン/ログアウト用ボタン（アクティビティ・終了と同じ右側ボタン列に並べる）。
+    private var loginButton: VerticalIconButton!
+    /// ログインボタンへアカウント状態（アイコン/アバター・ユーザー名）を反映する係。
+    private var accountController: AccountButtonController!
 
     private var contentStack: NSStackView!
 
@@ -66,8 +70,11 @@ final class DashboardViewController: NSViewController {
         bottomSpacer.heightAnchor.constraint(equalToConstant: 44).isActive = true
         dataStack.addArrangedSubview(bottomSpacer)
 
-        // 右側ボタン列
+        // 右側ボタン列（ログイン → アクティビティ → 終了）
+        loginButton = makeButton(symbol: "person.crop.circle.badge.plus", title: "ログイン", action: #selector(toggleLeaderboard))
+        accountController = AccountButtonController(button: loginButton, avatarDiameter: 26)
         let buttonStack = NSStackView(views: [
+            loginButton,
             makeButton(symbol: "waveform.path.ecg", title: "アクティビティ", action: #selector(openActivityMonitor)),
             makeButton(symbol: "power", title: "終了", action: #selector(quit)),
         ])
@@ -91,10 +98,7 @@ final class DashboardViewController: NSViewController {
         // 「今日のブラックサンダー」カードを一番上・横幅いっぱい（ボタン列含む全幅）に。
         todayCard.translatesAutoresizingMaskIntoConstraints = false
 
-        // アカウント行（ログイン/ログアウト）を最上部・全幅に置く。
-        accountBar.onAction = { [weak self] in self?.onToggleLeaderboard?() }
-
-        let outer = NSStackView(views: [accountBar, todayCard, content])
+        let outer = NSStackView(views: [todayCard, content])
         outer.orientation = .vertical
         outer.alignment = .leading
         outer.spacing = 12
@@ -102,7 +106,6 @@ final class DashboardViewController: NSViewController {
         outer.translatesAutoresizingMaskIntoConstraints = false
         // 同一階層（outer）に入ってから全幅制約を有効化する。
         todayCard.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
-        accountBar.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
 
         // 最背面にブラックサンダーの断面背景を敷く。
         let container = NSView()
@@ -141,9 +144,9 @@ final class DashboardViewController: NSViewController {
         todayCard.shuffleBar()
     }
 
-    /// アカウント行（ログイン状態・ユーザー名・アバター）を更新する。
+    /// ログインボタン（アカウント状態：アイコン/アバター・ユーザー名）を更新する。
     func updateAccount(connected: Bool, login: String?, avatarURL: URL?) {
-        accountBar.update(connected: connected, login: login, avatarURL: avatarURL)
+        accountController.update(connected: connected, login: login, avatarURL: avatarURL)
     }
 
     func update(_ snap: SystemSnapshot) {
@@ -205,6 +208,7 @@ final class DashboardViewController: NSViewController {
 
     @objc private func openActivityMonitor() { onOpenActivityMonitor?() }
     @objc private func quit() { onQuit?() }
+    @objc private func toggleLeaderboard() { onToggleLeaderboard?() }
 
     // MARK: - UI 部品
 
@@ -251,7 +255,7 @@ final class DashboardViewController: NSViewController {
     // アイコンとラベルの間隔（pt）。ここを変えると両ボタンの間隔が変わる。
     private let buttonIconLabelSpacing: CGFloat = 8
 
-    private func makeButton(symbol: String, title: String, action: Selector) -> NSButton {
+    private func makeButton(symbol: String, title: String, action: Selector) -> VerticalIconButton {
         let button = VerticalIconButton(
             symbol: symbol,
             title: title,

@@ -7,6 +7,9 @@ final class VerticalIconButton: NSButton {
     private let iconView = NSImageView()
     private let label = NSTextField(labelWithString: "")
     private let iconPointSize: CGFloat
+    /// 丸アバター表示時のサイズ固定制約（解除できるよう保持）。
+    private var iconWidth: NSLayoutConstraint?
+    private var iconHeight: NSLayoutConstraint?
 
     init(symbol: String, title: String, iconPointSize: CGFloat, spacing: CGFloat, target: AnyObject?, action: Selector) {
         self.iconPointSize = iconPointSize
@@ -26,6 +29,11 @@ final class VerticalIconButton: NSButton {
         label.font = .systemFont(ofSize: 11)
         label.alignment = .center
         label.textColor = BlackThunder.titleText
+        // 長い GitHub ユーザー名でもボタン幅を超えないように省略表示する。
+        label.lineBreakMode = .byTruncatingTail
+        label.cell?.usesSingleLineMode = true
+        label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        label.widthAnchor.constraint(lessThanOrEqualToConstant: 80).isActive = true
 
         let stack = NSStackView(views: [iconView, label])
         stack.orientation = .vertical
@@ -46,7 +54,42 @@ final class VerticalIconButton: NSButton {
         let config = NSImage.SymbolConfiguration(pointSize: iconPointSize, weight: .regular)
         iconView.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)?
             .withSymbolConfiguration(config)
+        iconView.contentTintColor = BlackThunder.gold
+        // SF Symbol 表示に戻すので丸マスクは解除。
+        setIconCircular(false, size: 0)
         label.stringValue = title
+    }
+
+    /// ラベルだけ差し替える（アイコンはそのまま）。
+    func setTitle(_ title: String) {
+        label.stringValue = title
+    }
+
+    /// アイコン部に任意の画像（GitHub アバター等）を丸く表示する。
+    func configure(avatar: NSImage, title: String, diameter: CGFloat) {
+        iconView.image = avatar
+        iconView.contentTintColor = nil
+        setIconCircular(true, size: diameter)
+        label.stringValue = title
+    }
+
+    /// iconView を丸くマスクする／解除する。size は丸表示時の直径。
+    private func setIconCircular(_ circular: Bool, size: CGFloat) {
+        iconView.wantsLayer = true
+        iconView.imageScaling = circular ? .scaleProportionallyUpOrDown : .scaleProportionallyDown
+        iconView.layer?.cornerRadius = circular ? size / 2 : 0
+        iconView.layer?.masksToBounds = circular
+        // 丸表示時はアイコンサイズを固定（SF Symbol 時は intrinsic 任せ）。
+        iconWidth?.isActive = false
+        iconHeight?.isActive = false
+        if circular {
+            let w = iconView.widthAnchor.constraint(equalToConstant: size)
+            let h = iconView.heightAnchor.constraint(equalToConstant: size)
+            w.isActive = true; h.isActive = true
+            iconWidth = w; iconHeight = h
+        } else {
+            iconWidth = nil; iconHeight = nil
+        }
     }
 
     // 内部のアイコン/ラベルではなくボタン自身がクリックを受けるようにする
@@ -55,103 +98,57 @@ final class VerticalIconButton: NSButton {
     }
 }
 
-/// ダッシュボード上部のアカウント行。
-/// 未ログイン時は「GitHubでログイン」ボタンを、ログイン済み時は
-/// GitHub アバター・ユーザー名・「ログアウト」ボタンを表示する。
-final class AccountBarView: NSView {
+/// アカウント（GitHub ログイン）の状態を、右側ボタン列の 1 ボタンに反映させる係。
+/// 未ログイン: 「ログイン」アイコン＋ラベル。ログイン済み: GitHub アバター＋ユーザー名。
+/// アバター画像は非同期取得してボタンに丸く表示する。
+final class AccountButtonController {
 
-    /// ログイン/ログアウトボタンが押されたとき。
-    var onAction: (() -> Void)?
-
-    private let avatarView = NSImageView()
-    private let nameLabel = NSTextField(labelWithString: "")
-    private let actionButton = NSButton()
+    private let button: VerticalIconButton
+    private let avatarDiameter: CGFloat
     /// いまアバターに表示している URL（取得の重複・取り違えを防ぐ）。
     private var currentAvatarURL: URL?
 
-    private let avatarSize: CGFloat = 28
-
-    init() {
-        super.init(frame: .zero)
-        translatesAutoresizingMaskIntoConstraints = false
-
-        avatarView.translatesAutoresizingMaskIntoConstraints = false
-        avatarView.wantsLayer = true
-        avatarView.layer?.cornerRadius = avatarSize / 2
-        avatarView.layer?.masksToBounds = true
-        avatarView.imageScaling = .scaleProportionallyUpOrDown
-        // 画像取得前のプレースホルダ。
-        avatarView.image = NSImage(systemSymbolName: "person.crop.circle", accessibilityDescription: nil)
-        avatarView.contentTintColor = BlackThunder.gold
-        NSLayoutConstraint.activate([
-            avatarView.widthAnchor.constraint(equalToConstant: avatarSize),
-            avatarView.heightAnchor.constraint(equalToConstant: avatarSize),
-        ])
-
-        nameLabel.font = .systemFont(ofSize: 13, weight: .semibold)
-        nameLabel.textColor = BlackThunder.titleText
-        nameLabel.lineBreakMode = .byTruncatingTail
-        nameLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-
-        actionButton.bezelStyle = .rounded
-        actionButton.controlSize = .small
-        actionButton.target = self
-        actionButton.action = #selector(actionTapped)
-        actionButton.setContentHuggingPriority(.required, for: .horizontal)
-
-        let stack = NSStackView(views: [avatarView, nameLabel, NSView(), actionButton])
-        stack.orientation = .horizontal
-        stack.alignment = .centerY
-        stack.spacing = 8
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(stack)
-        NSLayoutConstraint.activate([
-            stack.leadingAnchor.constraint(equalTo: leadingAnchor),
-            stack.trailingAnchor.constraint(equalTo: trailingAnchor),
-            stack.topAnchor.constraint(equalTo: topAnchor),
-            stack.bottomAnchor.constraint(equalTo: bottomAnchor),
-        ])
+    init(button: VerticalIconButton, avatarDiameter: CGFloat) {
+        self.button = button
+        self.avatarDiameter = avatarDiameter
     }
 
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
-
-    @objc private func actionTapped() { onAction?() }
-
-    /// ログイン状態に合わせて表示を更新する。
+    /// ログイン状態に合わせてボタンの見た目を更新する。
     /// - connected: 連携済みか
     /// - login: GitHub ユーザー名（未取得なら nil）
     /// - avatarURL: アバター画像 URL（未取得なら nil）
     func update(connected: Bool, login: String?, avatarURL: URL?) {
         if connected {
-            nameLabel.isHidden = false
-            avatarView.isHidden = false
             // login がまだ取れていない（連携直後・初回同期前）場合の保険。
-            nameLabel.stringValue = login.map { "@\($0)" } ?? "連携済み"
-            actionButton.title = "ログアウト"
-            loadAvatar(avatarURL)
+            let name = login.map { "@\($0)" } ?? "連携済み"
+            loadAvatar(avatarURL, fallbackTitle: name)
         } else {
-            nameLabel.isHidden = true
-            avatarView.isHidden = true
             currentAvatarURL = nil
-            actionButton.title = "GitHubでログイン"
+            button.configure(symbol: "person.crop.circle.badge.plus", title: "ログイン")
         }
     }
 
-    /// アバター画像を非同期取得して表示する。URL が変わらなければ何もしない。
-    private func loadAvatar(_ url: URL?) {
+    /// アバター画像を非同期取得してボタンに表示する。URL が変わらなければ再取得しない。
+    private func loadAvatar(_ url: URL?, fallbackTitle: String) {
         guard let url else {
-            avatarView.image = NSImage(systemSymbolName: "person.crop.circle", accessibilityDescription: nil)
             currentAvatarURL = nil
+            button.configure(symbol: "person.crop.circle.fill", title: fallbackTitle)
             return
         }
-        guard url != currentAvatarURL else { return }
+        // 取得済みの URL ならユーザー名だけ更新して終了（画像は据え置き）。
+        guard url != currentAvatarURL else {
+            button.setTitle(fallbackTitle)
+            return
+        }
         currentAvatarURL = url
+        // 取得が終わるまでは丸プレースホルダ（人型）を出しておく。
+        button.configure(symbol: "person.crop.circle.fill", title: fallbackTitle)
 
         URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
             guard let data, let image = NSImage(data: data) else { return }
             DispatchQueue.main.async {
                 guard let self, self.currentAvatarURL == url else { return }
-                self.avatarView.image = image
+                self.button.configure(avatar: image, title: fallbackTitle, diameter: self.avatarDiameter)
             }
         }.resume()
     }
