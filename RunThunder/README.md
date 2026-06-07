@@ -30,22 +30,22 @@
 - 取得は重いのでバックグラウンドで実行し、起動時 + 15 分ごと + メニューの「🍫 使用量を更新」で更新
 - 前提: `node` / `npx` が使えること（Homebrew 等）。アプリはログインシェル `zsh -lc` 経由で `npx` を解決
 
-## Install via Homebrew
+## Install via Homebrew (Cask)
 
-公開済みの GitHub Release から、ビルド済みバイナリを Homebrew で導入できます。
+GUI のメニューバーアプリなので **Homebrew Cask**（`.app` バンドル）として配布します。
 
 ```bash
 # tap を追加してからインストール
-brew tap a-company-jp/tap && brew install runthunder
+brew tap a-company-jp/tap && brew install --cask runthunder
 
 # もしくは 1 行で（tap を明示）
-brew install a-company-jp/tap/runthunder
+brew install --cask a-company-jp/tap/runthunder
 ```
 
-インストール後はメニューバー常駐アプリとしてバイナリから起動します（Dock アイコンは出ません）:
+インストールすると `RunThunder.app` が `/Applications` に入ります。起動（メニューバー常駐・Dock アイコンなし）:
 
 ```bash
-runthunder
+open -a RunThunder
 ```
 
 > メモ
@@ -53,14 +53,16 @@ runthunder
 > - `brew tap a-company-jp/tap` は `a-company-jp/homebrew-tap` リポジトリを参照します。
 > - **リリース（GitHub Release の publish）が CI ワークフローを起動**します
 >   （[`.github/workflows/runthunder-release.yml`](../.github/workflows/runthunder-release.yml)）。
->   ワークフローは `swift build -c release` でビルド → tarball を Release に添付 →
->   tap の `Formula/runthunder.rb`（url + sha256）を自動更新します。
+>   ワークフローは [`build_app.sh`](build_app.sh) で **`RunThunder.app`（ユニバーサル・アドホック署名）** をビルド →
+>   `ditto` で zip 化して Release に添付 → tap の `Casks/runthunder.rb`（url + sha256）を自動更新します。
 > - tap への push には `HOMEBREW_TAP_TOKEN`（tap リポジトリへの `repo` スコープ PAT）の
->   シークレット設定が必要です。未設定の場合はこのリポジトリ同梱の
->   [`Formula/runthunder.rb`](../Formula/runthunder.rb) を使って
->   `brew install --formula ./Formula/runthunder.rb` でもインストールできます。
-> - Homebrew 版はバイナリ単体のため、メニューバーのキャラはコード生成の仮フレームで動作します
->   （本番のコマ画像を使いたい場合は下記「ビルド & 起動」で `.app` を生成してください）。
+>   シークレット設定が必要です。未設定でも Release には `RunThunder-<version>-macos.zip` が添付されるので、
+>   展開して `/Applications` に置けば手動インストールできます。
+> - **未署名（アドホック署名）アプリ**のため、Gatekeeper が初回起動をブロックする場合があります。
+>   Cask の `postflight` が quarantine 属性を自動除去しますが、手動なら
+>   `xattr -dr com.apple.quarantine /Applications/RunThunder.app` を実行するか、
+>   Finder で右クリック →「開く」を選んでください。
+> - Cask 版は本番のコマ画像をバンドルに含むため、メニューバーのキャラは本番フレームで動作します。
 
 ## ビルド & 起動
 
