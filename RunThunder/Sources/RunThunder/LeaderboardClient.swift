@@ -25,7 +25,7 @@ final class LeaderboardClient {
     // MARK: - 設定
 
     /// 連携先ウェブサイトのベース URL（既定値。UserDefaults で上書き可能）。
-    static let defaultBaseURL = "https://zakuzaku-web-wusvc57q7a-an.a.run.app"
+    static let defaultBaseURL = "https://black.shion.dev"
 
     /// クライアント識別子（IngestRequest.client / connect の app パラメータ）。
     static let appName = "runthunder"
