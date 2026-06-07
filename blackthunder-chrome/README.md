@@ -10,6 +10,10 @@
 > ※ 非公式のファン作品です。「ブラックサンダー」は有楽製菓株式会社の商品・商標です。
 > 本拡張は同社とは関係ありません。
 
+## 画像
+<img width="705" height="414" alt="CleanShot 2026-06-07 at 14 05 14@2x" src="https://github.com/user-attachments/assets/4e1b5006-1a75-4fa6-ad76-98a77b39ecf9" />
+
+
 ## ThunderCaptcha とは
 
 - GitHub PR ページの **Merge / Squash / Rebase / Confirm 系ボタン** を捕捉し、
