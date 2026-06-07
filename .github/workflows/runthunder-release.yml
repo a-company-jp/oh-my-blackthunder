@@ -41,6 +41,10 @@ jobs:
       TAP_REPO: a-company-jp/homebrew-tap
       # Owner/name of THIS repo (where releases live).
       RELEASE_REPO: a-company-jp/oh-my-blackthunder
+      # The `secrets` context is NOT allowed in step `if:` conditions, but it IS
+      # allowed in a job-level env value. Surface a boolean presence flag here so
+      # the steps below can gate on `env.HAS_TAP_TOKEN` instead of `secrets.*`.
+      HAS_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN != '' }}
 
     steps:
       - name: Checkout
@@ -167,7 +171,7 @@ jobs:
           cat Formula/runthunder.rb
 
       - name: Push formula to the Homebrew tap
-        if: ${{ secrets.HOMEBREW_TAP_TOKEN != '' }}
+        if: ${{ env.HAS_TAP_TOKEN == 'true' }}
         env:
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         shell: bash
@@ -191,7 +195,7 @@ jobs:
           fi
 
       - name: Note when tap token is missing
-        if: ${{ secrets.HOMEBREW_TAP_TOKEN == '' }}
+        if: ${{ env.HAS_TAP_TOKEN != 'true' }}
         shell: bash
         run: |
           echo "::warning::HOMEBREW_TAP_TOKEN is not set — skipped pushing to ${TAP_REPO}."
