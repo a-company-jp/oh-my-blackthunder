@@ -1,19 +1,27 @@
-# Contributing
+# コントリビューションガイド
 
-Thanks for helping build Oh My Blackthunder.
+Black Thunder Monorepo への貢献ありがとうございます。
 
-This project follows an Oh My Zsh-like directory strategy:
+このリポジトリは monorepo です。各アプリはトップレベルのディレクトリに自己完結して
+配置され、**アプリごとの開発手順はそれぞれの `CONTRIBUTING.md`** にまとめています。
 
-- Core shell behavior belongs in `lib/`.
-- Built-in plugins belong in `plugins/<plugin>/<plugin>.plugin.zsh`.
-- Built-in themes belong in `themes/<theme>.zsh-theme`.
-- Installation and maintenance scripts belong in `tools/`.
-- Config examples belong in `templates/`.
+| アプリ | 開発ガイド |
+|---|---|
+| oh-my-blackthunder | [oh-my-blackthunder/CONTRIBUTING.md](./oh-my-blackthunder/CONTRIBUTING.md) |
+| oh-my-blackthunder for JetBrains | [oh-my-blackthunder-jetbrains/CONTRIBUTING.md](./oh-my-blackthunder-jetbrains/CONTRIBUTING.md) |
+| blackthunder-chrome | [blackthunder-chrome/CONTRIBUTING.md](./blackthunder-chrome/CONTRIBUTING.md) |
+| blackthunder-vscode | [blackthunder-vscode/CONTRIBUTING.md](./blackthunder-vscode/CONTRIBUTING.md) |
+| RunThunder | [RunThunder/CONTRIBUTING.md](./RunThunder/CONTRIBUTING.md) |
 
-Before opening a pull request, keep the change focused and describe:
+それぞれのアプリの概要・使い方・インストールは、各ディレクトリの `README.md` を
+参照してください。
 
-1. What changed.
-2. Why it belongs in that directory.
-3. How you checked it.
+## プルリクエストの前に
 
-Do not commit machine-local cache files, logs, or personal customizations.
+変更は小さくまとめ、以下を説明してください。
+
+1. 何を変えたか。
+2. どのアプリ／ディレクトリに属するか、なぜそこか。
+3. どう動作確認したか。
+
+マシンローカルのキャッシュファイル・ログ・個人設定はコミットしないでください。

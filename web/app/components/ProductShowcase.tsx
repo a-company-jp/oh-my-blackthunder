@@ -2,13 +2,19 @@
 
 // ---------------------------------------------------------------------------
 // Product showcase grid for the landing page. Each card is a playful Black
-// Thunder panel with a sticker/monster, a JA tagline + description, and a
-// GitHub link. Cards lift on hover and the artwork wiggles.
+// Thunder panel with a sticker/monster, a JA tagline + description, the
+// supported AI tools (Claude / Codex) and platforms, and a GitHub link to the
+// app's README in the monorepo. Cards lift on hover and the artwork wiggles.
 // ---------------------------------------------------------------------------
 
 import Image from "next/image";
 
 import { useTilt } from "@/app/components/eastereggs/useTilt";
+
+// Base URL for the monorepo. Each app lives in a top-level directory with its
+// own README, so product links point at that README inside the monorepo
+// rather than at non-existent standalone repositories.
+const REPO_BASE = "https://github.com/a-company-jp/oh-my-blackthunder/blob/main";
 
 interface Product {
   name: string;
@@ -26,7 +32,7 @@ const PRODUCTS: Product[] = [
     tagline: "zsh フレームワーク",
     description:
       "ターミナルにブラックサンダーを。AIのザクザク開発を計測し、シェルから「食べた！」を宣言できる zsh プラグイン集。",
-    href: "https://github.com/a-company-jp/oh-my-blackthunder",
+    href: `${REPO_BASE}/oh-my-blackthunder/README.md`,
     art: "/assets/sticker/zakuzaku-hack.png",
     accent: "text-thunder-yellow",
     rotate: "-rotate-6",
@@ -36,7 +42,7 @@ const PRODUCTS: Product[] = [
     tagline: "JetBrains プラグイン",
     description:
       "IntelliJ / PyCharm などの JetBrains IDE から、AIザクザク度をそのまま記録。コーディングのお供にブラックサンダーを。",
-    href: "https://github.com/a-company-jp/oh-my-blackthunder-jetbrains",
+    href: `${REPO_BASE}/oh-my-blackthunder-jetbrains/README.md`,
     art: "/assets/sticker/fullsnack-engineer.png",
     accent: "text-thunder-red",
     rotate: "rotate-3",
@@ -46,7 +52,7 @@ const PRODUCTS: Product[] = [
     tagline: "ThunderCaptcha 拡張",
     description:
       "「私はブラックサンダーを食べました」にチェック。reCAPTCHA 風のチェックボックスで、食べた回数をザクザク記録する Chrome 拡張。",
-    href: "https://github.com/a-company-jp/blackthunder-chrome",
+    href: `${REPO_BASE}/blackthunder-chrome/README.md`,
     art: "/assets/sticker/iam-blackthunder.png",
     accent: "text-thunder-yellow",
     rotate: "-rotate-3",
@@ -56,7 +62,7 @@ const PRODUCTS: Product[] = [
     tagline: "VS Code 拡張",
     description:
       "エディタを離れずにAIザクザク度を可視化。ステータスバーでブラックサンダーの本数を眺めながら、BTDD で開発を進めよう。",
-    href: "https://github.com/a-company-jp/blackthunder-vscode",
+    href: `${REPO_BASE}/blackthunder-vscode/README.md`,
     art: "/assets/sticker/lgtm.png",
     accent: "text-thunder-red",
     rotate: "rotate-6",
@@ -66,7 +72,7 @@ const PRODUCTS: Product[] = [
     tagline: "macOS メニューバー アプリ",
     description:
       "デバイスごとのAIザクザク度を計測してランキングへ送信。スパークラインと使用率バーで、あなたのザクザクを毎日チェック。",
-    href: "https://github.com/a-company-jp/RunThunder",
+    href: `${REPO_BASE}/RunThunder/README.md`,
     art: "/assets/monster/ike.png",
     accent: "text-thunder-yellow",
     rotate: "rotate-2",
@@ -76,15 +82,25 @@ const PRODUCTS: Product[] = [
     tagline: "おまけ ガジェット",
     description:
       "ブラックサンダーは電池になるのか? エネルギーあふれる実験プロジェクト。ザクザクの精神でなんでも作る。",
-    href: "https://github.com/a-company-jp/blackthunder-battery",
+    href: `${REPO_BASE}/blackthunder-battery/README.md`,
     art: "/assets/sticker/battery.png",
     accent: "text-thunder-red",
     rotate: "-rotate-2",
   },
 ];
 
-// Environment / tech logos per product (brand marks in public/assets/tech).
-const TECH_LOGOS: Record<string, string[]> = {
+// Supported AI tools per product (brand marks in public/assets/tech). These
+// lead the logo row so the AI-coding tools each app understands are shown
+// first, before the platforms they run on.
+const AI_TOOLS: Record<string, string[]> = {
+  // The zsh framework meters both Claude and Codex usage.
+  "oh-my-blackthunder": ["claude", "codex"],
+  // RunThunder reads Claude usage via ccusage.
+  RunThunder: ["claude"],
+};
+
+// Platforms each product runs on (brand marks in public/assets/tech).
+const PLATFORM_LOGOS: Record<string, string[]> = {
   "oh-my-blackthunder": ["apple"],
   "oh-my-blackthunder for JetBrains": ["jetbrains", "intellij", "pycharm", "webstorm"],
   "blackthunder-chrome": ["chrome"],
@@ -93,27 +109,45 @@ const TECH_LOGOS: Record<string, string[]> = {
   "blackthunder-battery": [],
 };
 
-function TechLogos({ name }: { name: string }) {
-  const logos = TECH_LOGOS[name] ?? [];
-  if (logos.length === 0) return null;
+function LogoChip({ logo }: { logo: string }) {
   return (
-    <div className="flex items-center gap-1.5" aria-label="対応環境">
-      {logos.map((logo) => (
-        <span
-          key={logo}
-          className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-white/5 p-1 ring-1 ring-white/10 transition group-hover:ring-thunder-yellow/40"
-        >
-          <Image
-            src={`/assets/tech/${logo}.svg`}
-            alt=""
-            width={18}
-            height={18}
-            unoptimized
-            aria-hidden
-            className="h-4 w-4 object-contain"
-          />
-        </span>
-      ))}
+    <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-white/5 p-1 ring-1 ring-white/10 transition group-hover:ring-thunder-yellow/40">
+      <Image
+        src={`/assets/tech/${logo}.svg`}
+        alt=""
+        width={18}
+        height={18}
+        unoptimized
+        aria-hidden
+        className="h-4 w-4 object-contain"
+      />
+    </span>
+  );
+}
+
+function TechLogos({ name }: { name: string }) {
+  const aiTools = AI_TOOLS[name] ?? [];
+  const platforms = PLATFORM_LOGOS[name] ?? [];
+  if (aiTools.length === 0 && platforms.length === 0) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {aiTools.length > 0 && (
+        <div className="flex items-center gap-1.5" aria-label="対応AIツール">
+          {aiTools.map((logo) => (
+            <LogoChip key={logo} logo={logo} />
+          ))}
+        </div>
+      )}
+      {aiTools.length > 0 && platforms.length > 0 && (
+        <span aria-hidden className="mx-0.5 h-4 w-px bg-white/10" />
+      )}
+      {platforms.length > 0 && (
+        <div className="flex items-center gap-1.5" aria-label="対応プラットフォーム">
+          {platforms.map((logo) => (
+            <LogoChip key={logo} logo={logo} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -121,8 +155,8 @@ function TechLogos({ name }: { name: string }) {
 function GithubMark() {
   return (
     <svg
-      width="16"
-      height="16"
+      width="22"
+      height="22"
       viewBox="0 0 16 16"
       fill="currentColor"
       aria-hidden
@@ -170,10 +204,12 @@ function ProductCard({ p }: { p: Product }) {
       </div>
       <TechLogos name={p.name} />
       <p className="text-sm leading-relaxed text-white/65">{p.description}</p>
-      <span className="mt-auto inline-flex items-center gap-1.5 pt-1 text-sm font-bold text-thunder-yellow transition group-hover:gap-2.5">
+      <span
+        className="mt-auto inline-flex items-center pt-1 text-thunder-yellow transition group-hover:scale-110"
+        aria-label="GitHub で見る"
+        title="GitHub で見る"
+      >
         <GithubMark />
-        GitHub で見る
-        <span aria-hidden>→</span>
       </span>
     </a>
   );
