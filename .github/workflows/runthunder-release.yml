@@ -1,8 +1,13 @@
 name: RunThunder Release
 
-# Builds the RunThunder macOS menu-bar app (Swift Package Manager) in release mode,
-# packages the binary into a tarball, attaches it to the GitHub Release, and refreshes
-# the Homebrew formula so users can `brew install runthunder`.
+# Builds the RunThunder macOS menu-bar app (Swift Package Manager) into a proper
+# .app BUNDLE (universal, ad-hoc signed), zips it, attaches it to the GitHub Release,
+# and refreshes the Homebrew CASK so users can `brew install --cask runthunder`.
+#
+# RunThunder is a GUI menu-bar app that loads its frame images from inside the app
+# bundle (Bundle.main.resourceURL/Frames), so it MUST ship as a .app via a cask —
+# a bare CLI binary in a formula renders only placeholder frames and breaks
+# bundle-id features (SMAppService login item, prefs).
 #
 # Triggers:
 #   - release: published   -> normal flow, the published release's tag is used.
@@ -12,12 +17,12 @@ name: RunThunder Release
 #   - GITHUB_TOKEN        : built-in, used to upload the release asset (no setup needed).
 #   - HOMEBREW_TAP_TOKEN  : a Personal Access Token (classic) with `repo` scope on the
 #                           tap repo a-company-jp/homebrew-tap. Used to push the updated
-#                           Formula/runthunder.rb to that repo. Create it in the tap repo
+#                           Casks/runthunder.rb to that repo. Create it in the tap repo
 #                           (or org) settings and add it as a repo secret here named
 #                           HOMEBREW_TAP_TOKEN.
-#                           If this secret is absent, the tap-push step is skipped and the
-#                           formula committed in THIS repo under Formula/runthunder.rb is
-#                           the fallback (users can `brew install --formula ./Formula/runthunder.rb`).
+#                           If this secret is absent, the tap-push step is skipped; the
+#                           release still carries the RunThunder.app zip, which can be
+#                           installed manually (unzip into /Applications).
 
 on:
   release:
@@ -84,93 +89,102 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Resolved tag=$TAG version=$VERSION"
 
-      - name: Build (release)
+      - name: Build .app bundle (universal, ad-hoc signed)
         shell: bash
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+          # Universal so both Apple Silicon and Intel Macs can run it.
+          SWIFT_BUILD_FLAGS: "--arch arm64 --arch x86_64"
         run: |
           set -euo pipefail
-          swift build -c release --package-path RunThunder
-          ls -la RunThunder/.build/release/RunThunder
-          file RunThunder/.build/release/RunThunder
+          ./RunThunder/build_app.sh
+          APP="RunThunder/RunThunder.app"
+          test -d "$APP" || { echo "::error::$APP was not produced"; exit 1; }
+          file "$APP/Contents/MacOS/RunThunder"
+          codesign -dv --verbose=2 "$APP" || true
+          # Sanity: the real frame images must be inside the bundle.
+          ls "$APP/Contents/Resources/Frames" | head
 
-      - name: Package tarball + sha256
+      - name: Package .app zip + sha256
         id: pkg
         shell: bash
         run: |
           set -euo pipefail
           VERSION="${{ steps.ver.outputs.version }}"
-          TARBALL="RunThunder-${VERSION}-macos.tar.gz"
-          STAGE="$(mktemp -d)"
-          cp RunThunder/.build/release/RunThunder "$STAGE/RunThunder"
-          # Create a flat tarball whose only entry is the executable "RunThunder".
-          tar -czf "$TARBALL" -C "$STAGE" RunThunder
-          SHA256="$(shasum -a 256 "$TARBALL" | awk '{print $1}')"
-          echo "tarball=$TARBALL" >> "$GITHUB_OUTPUT"
+          ZIP="RunThunder-${VERSION}-macos.zip"
+          # ditto is the macOS-correct way to zip a .app (preserves bundle layout,
+          # symlinks, extended attrs and the code signature).
+          ditto -c -k --sequesterRsrc --keepParent RunThunder/RunThunder.app "$ZIP"
+          SHA256="$(shasum -a 256 "$ZIP" | awk '{print $1}')"
+          echo "zip=$ZIP" >> "$GITHUB_OUTPUT"
           echo "sha256=$SHA256" >> "$GITHUB_OUTPUT"
-          echo "Built $TARBALL"
-          echo "sha256=$SHA256"
+          echo "Built $ZIP sha256=$SHA256"
 
-      - name: Upload tarball to the GitHub Release
+      - name: Upload .app zip to the GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.ver.outputs.tag }}
-          files: ${{ steps.pkg.outputs.tarball }}
+          files: ${{ steps.pkg.outputs.zip }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Render Homebrew formula
-        id: formula
+      - name: Render Homebrew cask
+        id: cask
         shell: bash
         run: |
           set -euo pipefail
           VERSION="${{ steps.ver.outputs.version }}"
           TAG="${{ steps.ver.outputs.tag }}"
-          TARBALL="${{ steps.pkg.outputs.tarball }}"
+          ZIP="${{ steps.pkg.outputs.zip }}"
           SHA256="${{ steps.pkg.outputs.sha256 }}"
-          URL="https://github.com/${RELEASE_REPO}/releases/download/${TAG}/${TARBALL}"
+          URL="https://github.com/${RELEASE_REPO}/releases/download/${TAG}/${ZIP}"
 
-          mkdir -p Formula
-          cat > Formula/runthunder.rb <<RUBY
-          # typed: false
+          mkdir -p Casks
+          cat > Casks/runthunder.rb <<RUBY
           # frozen_string_literal: true
 
-          # RunThunder Homebrew formula.
-          # This file is regenerated on each release by
-          # .github/workflows/runthunder-release.yml — do not edit url/sha256 by hand.
-          class Runthunder < Formula
+          # RunThunder Homebrew cask.
+          # Regenerated on each release by .github/workflows/runthunder-release.yml
+          # — do not edit version/sha256/url by hand.
+          cask "runthunder" do
+            version "${VERSION}"
+            sha256 "${SHA256}"
+
+            url "${URL}"
+            name "RunThunder"
             desc "RunCat-style macOS menu-bar app with a Black Thunder character (CPU/MEM/NET, Claude usage)"
             homepage "https://github.com/a-company-jp/oh-my-blackthunder"
-            url "${URL}"
-            sha256 "${SHA256}"
-            version "${VERSION}"
 
-            depends_on :macos
+            depends_on macos: ">= :ventura"
 
-            def install
-              bin.install "RunThunder"
+            app "RunThunder.app"
+
+            # The app is ad-hoc signed (not notarized), so strip the quarantine flag
+            # after install to avoid Gatekeeper blocking the first launch.
+            postflight do
+              system_command "/usr/bin/xattr",
+                             args: ["-dr", "com.apple.quarantine", "#{appdir}/RunThunder.app"]
             end
 
-            def caveats
-              <<~EOS
-                RunThunder is a menu-bar (LSUIElement) app. Launch it from the binary:
+            uninstall quit: "io.local.runthunder"
 
-                  runthunder
+            zap trash: [
+              "~/Library/Preferences/io.local.runthunder.plist",
+            ]
 
-                It lives in the macOS menu bar (no Dock icon). To run it at login,
-                use the app's own "ログイン時に起動" (Launch at Login) toggle, or add
-                \$(brew --prefix)/bin/runthunder to your login items.
-              EOS
-            end
-
-            test do
-              assert_predicate bin/"RunThunder", :executable?
-            end
+            caveats <<~EOS
+              RunThunder is an unsigned (ad-hoc) menu-bar app. If macOS still blocks it
+              on first launch, right-click RunThunder.app in /Applications and choose
+              Open, or run:
+                xattr -dr com.apple.quarantine /Applications/RunThunder.app
+            EOS
           end
           RUBY
 
-          echo "Rendered Formula/runthunder.rb:"
-          cat Formula/runthunder.rb
+          echo "Rendered Casks/runthunder.rb:"
+          cat Casks/runthunder.rb
 
-      - name: Push formula to the Homebrew tap
+      - name: Push cask to the Homebrew tap
         if: ${{ env.HAS_TAP_TOKEN == 'true' }}
         env:
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
@@ -180,25 +194,28 @@ jobs:
           VERSION="${{ steps.ver.outputs.version }}"
           WORK="$(mktemp -d)"
           git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/${TAP_REPO}.git" "$WORK"
-          mkdir -p "$WORK/Formula"
-          cp Formula/runthunder.rb "$WORK/Formula/runthunder.rb"
+          mkdir -p "$WORK/Casks"
+          cp Casks/runthunder.rb "$WORK/Casks/runthunder.rb"
+          # Drop the obsolete formula (replaced by the cask) so `brew install
+          # runthunder` resolves unambiguously to the cask.
+          rm -f "$WORK/Formula/runthunder.rb"
           cd "$WORK"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add Formula/runthunder.rb
+          git add -A
           if git diff --cached --quiet; then
-            echo "No formula changes to push."
+            echo "No cask changes to push."
           else
             git commit -m "runthunder ${VERSION}"
             git push origin HEAD
-            echo "Pushed runthunder ${VERSION} to ${TAP_REPO}."
+            echo "Pushed runthunder ${VERSION} cask to ${TAP_REPO}."
           fi
 
       - name: Note when tap token is missing
         if: ${{ env.HAS_TAP_TOKEN != 'true' }}
         shell: bash
         run: |
-          echo "::warning::HOMEBREW_TAP_TOKEN is not set — skipped pushing to ${TAP_REPO}."
+          echo "::warning::HOMEBREW_TAP_TOKEN is not set — skipped pushing the cask to ${TAP_REPO}."
           echo "Add a PAT with 'repo' scope on the tap as the HOMEBREW_TAP_TOKEN secret to enable tap updates."
-          echo "Fallback: the formula in this repo (Formula/runthunder.rb) can be installed with:"
-          echo "  brew install --formula ./Formula/runthunder.rb"
+          echo "Fallback: download RunThunder-<version>-macos.zip from the GitHub Release, unzip it,"
+          echo "and move RunThunder.app into /Applications."
