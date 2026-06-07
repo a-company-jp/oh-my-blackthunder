@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 
 export function UserMenu() {
-  const { login, avatarUrl, displayName, signOut } = useAuth();
+  const { login, githubId, avatarUrl, displayName, signOut } = useAuth();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -64,10 +64,10 @@ export function UserMenu() {
           role="menu"
           className="bt-panel absolute right-0 z-30 mt-2 w-48 overflow-hidden p-1 text-sm"
         >
-          {login ? (
+          {githubId ? (
             <Link
               role="menuitem"
-              href={`/u/${login}`}
+              href={`/u/${githubId}`}
               onClick={() => setOpen(false)}
               className="block rounded-lg px-3 py-2 font-bold transition hover:bg-thunder-yellow/15"
             >

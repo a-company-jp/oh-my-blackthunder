@@ -1,6 +1,6 @@
 "use client";
 
-// Client profile view for /u/[login], redesigned in the RunThunder dashboard
+// Client profile view for /u/[id] (uid = gh_<github_id>), in the RunThunder dashboard
 // taste: a hero with big metric tiles + compact stat tiles, a provider
 // breakdown (rounded bars), a daily sparkline + history, the user's devices,
 // and the user's teams. The EatButton shows to the profile owner.
@@ -14,27 +14,27 @@ import { ProviderBreakdown } from "@/app/components/ProviderBreakdown";
 import { Empty, ErrorView, Loading } from "@/app/components/StateViews";
 import { UserTeams } from "@/app/components/UserTeams";
 import { useAuth } from "@/lib/auth-context";
-import { subscribeProfileByLogin } from "@/lib/client/firestore";
+import { subscribeProfileByUid } from "@/lib/client/firestore";
 import type { UserDoc } from "@/lib/shared/schema";
 
-export function ProfileView({ login }: { login: string }) {
-  const { login: viewerLogin } = useAuth();
+export function ProfileView({ uid }: { uid: string }) {
+  const { githubId: viewerGithubId } = useAuth();
   const [user, setUser] = useState<UserDoc | null | undefined>(undefined);
   const [error, setError] = useState<Error | null>(null);
   const [countDelta, setCountDelta] = useState(0);
 
-  const loginLower = login.toLowerCase();
   // Last canonical count we observed; when the live count rises, the server
   // write landed so we drop the matching optimistic delta to avoid double count.
   const lastCanonicalRef = useRef<number | null>(null);
 
   useEffect(() => {
     setError(null);
-    setUser(undefined);
+    setUser(uid ? undefined : null); // 不正な id は即「存在しない」扱い
     setCountDelta(0);
     lastCanonicalRef.current = null;
-    const unsub = subscribeProfileByLogin(
-      loginLower,
+    if (!uid) return;
+    const unsub = subscribeProfileByUid(
+      uid,
       (next) => {
         setUser(next);
         if (next) {
@@ -49,7 +49,7 @@ export function ProfileView({ login }: { login: string }) {
       (e) => setError(e),
     );
     return unsub;
-  }, [loginLower]);
+  }, [uid]);
 
   if (error) {
     return (
@@ -69,8 +69,8 @@ export function ProfileView({ login }: { login: string }) {
     return (
       <Empty
         mascot="wi"
-        title={`@${login} はまだザクザクしていません`}
-        subtitle="このユーザーはまだランキングに登場していません。"
+        title="このユーザーはまだザクザクしていません"
+        subtitle="まだランキングに登場していません。"
       >
         <Link href="/leaderboard" className="bt-button mt-2">
           ランキングへ戻る
@@ -79,8 +79,7 @@ export function ProfileView({ login }: { login: string }) {
     );
   }
 
-  const isOwner =
-    viewerLogin != null && viewerLogin.toLowerCase() === user.loginLower;
+  const isOwner = viewerGithubId != null && viewerGithubId === user.githubId;
 
   return (
     <div className="flex flex-col gap-6">

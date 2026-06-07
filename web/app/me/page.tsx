@@ -11,13 +11,13 @@ import { useAuth } from "@/lib/auth-context";
 
 export default function MePage() {
   const router = useRouter();
-  const { user, login, loading } = useAuth();
+  const { user, githubId, loading } = useAuth();
 
   useEffect(() => {
-    if (!loading && user && login) {
-      router.replace(`/u/${login}`);
+    if (!loading && user && githubId) {
+      router.replace(`/u/${githubId}`);
     }
-  }, [loading, user, login, router]);
+  }, [loading, user, githubId, router]);
 
   if (loading) {
     return <Loading label="読み込み中…" />;
@@ -37,9 +37,9 @@ export default function MePage() {
     );
   }
 
-  // Signed in but the GitHub login isn't resolved yet (e.g. session restored on
+  // Signed in but the GitHub id isn't resolved yet (e.g. session restored on
   // reload before re-auth). Prompt a re-sign-in to recover it.
-  if (!login) {
+  if (!githubId) {
     return (
       <MascotEmpty
         mascot="ike"

@@ -66,9 +66,10 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const minutesAgo = (m: number) => NOW - m * 60 * 1000;
 const daysAgo = (d: number) => NOW - d * DAY_MS;
 
-/** UTC yyyymmdd (zero-padded so lexicographic order == chronological). */
-function utcDayKey(ms: number): string {
-  const d = new Date(ms);
+/** JST(UTC+9) yyyymmdd（ゼロ埋めで辞書順 == 時系列順）。サーバの jstDayKey と揃える。 */
+const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
+function jstDayKey(ms: number): string {
+  const d = new Date(ms + JST_OFFSET_MS);
   const y = d.getUTCFullYear();
   const mo = String(d.getUTCMonth() + 1).padStart(2, "0");
   const da = String(d.getUTCDate()).padStart(2, "0");
@@ -466,7 +467,7 @@ function buildDailyDocs(user: UserDoc, days: number): DailyDoc[] {
     }
 
     docs.push({
-      day: utcDayKey(ms),
+      day: jstDayKey(ms),
       bars: dayBars,
       events: Math.max(1, Math.round(user.totalEvents * w)),
       eats: Math.round(user.blackThunderCount * w),
