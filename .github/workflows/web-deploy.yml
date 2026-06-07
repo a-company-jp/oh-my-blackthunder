@@ -110,7 +110,9 @@ jobs:
           service: ${{ env.SERVICE }}
           region: ${{ vars.GCP_REGION }}
           image: ${{ env.IMAGE }}:${{ github.sha }}
-          service_account: ${{ env.RUNTIME_SA }}
+          # deploy-cloudrun@v2 has no `service_account` input; pass it as a gcloud
+          # flag so every revision keeps running as the runtime SA.
+          flags: --service-account=${{ env.RUNTIME_SA }}
           env_vars: |
             NODE_ENV=production
             GOOGLE_CLOUD_PROJECT=${{ vars.GCP_PROJECT_ID }}
