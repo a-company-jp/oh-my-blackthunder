@@ -22,6 +22,10 @@
   **スタンドアロン Swift アプリ**、または [SwiftBar](https://github.com/swiftbar/SwiftBar) /
   [xbar](https://github.com/matryer/xbar) 用の **プラグイン**（Python で画像生成）を使えます。
 
+## 起動イメージ
+<img width="454" height="366" alt="CleanShot 2026-06-07 at 14 03 19@2x" src="https://github.com/user-attachments/assets/c4d9630a-5bda-456d-94c4-43b663fa1633" />
+
+
 ## 使い方
 
 ### A. RunThunder に統合された表示（おすすめ）
