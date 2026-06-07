@@ -6,20 +6,35 @@
 > ※ 非公式のファン作品です。「ブラックサンダー」は有楽製菓株式会社の商品・商標です。
 > 本プロジェクトは同社とは関係ありません。
 
+> 🍫 **このチョコ・バッテリー表示は [RunThunder](../RunThunder/) に統合されました。**
+> RunThunder を使えば、走るブラックサンダーの隣に同じチョコのバッテリーが2つ目の
+> メニューバーアイコンとして並びます（設定でON/OFF可）。アプリを1つ起動するだけで
+> 済むので、**通常は RunThunder の利用をおすすめします**。
+> このディレクトリは、単体で動かしたい場合の **スタンドアロン Swift アプリ** と、
+> **SwiftBar / xbar プラグイン**版を残しています。
+
 ## 概要
 
 - **板チョコ＝バッテリー**: 残量ぶんだけ左にチョコが残り、消費したぶん（右側）は
   食べられて薄くなります。残量はチョコの「かじり具合」で一目でわかります。
 - **充電表示**: 電源に挿している間は残量の横に ⚡ を表示します。
-- **2 つの動かし方**: 単体で動く **ネイティブ Swift アプリ**（メニューバー常駐）と、
-  [SwiftBar](https://github.com/swiftbar/SwiftBar) / [xbar](https://github.com/matryer/xbar)
-  用の **プラグイン**（Python で画像生成）の両方を同梱しています。お好みの方を使えます。
+- **動かし方**: [RunThunder](../RunThunder/) に統合済み（おすすめ）。単体で使いたい場合は
+  **スタンドアロン Swift アプリ**、または [SwiftBar](https://github.com/swiftbar/SwiftBar) /
+  [xbar](https://github.com/matryer/xbar) 用の **プラグイン**（Python で画像生成）を使えます。
 
 ## 使い方
 
-### A. ネイティブ Swift アプリ（おすすめ）
+### A. RunThunder に統合された表示（おすすめ）
 
-ビルドして起動するだけ。メニューバーに常駐し、Dock アイコンは出ません（`LSUIElement`）。
+[RunThunder](../RunThunder/) をインストールして起動すると、走るキャラの隣にこのチョコの
+バッテリーが2つ目のメニューバーアイコンとして表示されます。右クリックの設定メニューの
+**「🔋 チョコでバッテリーを表示」** でON/OFFできます。詳しくは
+[RunThunder の README](../RunThunder/README.md) を参照してください。
+
+### B. スタンドアロン Swift アプリ
+
+単体で動かしたい場合。ビルドして起動するだけで、メニューバーに常駐します
+（Dock アイコンは出ません = `LSUIElement`）。
 
 ```bash
 cd BlackThunderBattery
@@ -34,7 +49,7 @@ open build/BlackThunderBattery.app
 > Finder で `BlackThunderBattery.app` を右クリック →「開く」を選ぶか、
 > `xattr -dr com.apple.quarantine build/BlackThunderBattery.app` を実行してください。
 
-### B. SwiftBar / xbar プラグイン
+### C. SwiftBar / xbar プラグイン
 
 メニューバーアプリの [SwiftBar](https://github.com/swiftbar/SwiftBar) か
 [xbar](https://github.com/matryer/xbar) を使う場合は、Python で板チョコ画像を生成する

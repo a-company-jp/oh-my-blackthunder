@@ -54,7 +54,11 @@ python3 tools/make_frames.py ~/Downloads/blackthunder_package.png
 - `CPUMonitor.swift` … `host_statistics` の tick 差分から total/user/system/idle を算出
 - `MemoryMonitor.swift` … `host_statistics64` の VM 統計から使用率/App/Wired/Compressed/pressure(近似)
 - `StorageMonitor.swift` … `statfs` で起動ボリュームの使用量/総量
-- `BatteryMonitor.swift` … IOKit (`IOPS*` + AppleSmartBattery) で残量/電源/容量/サイクル/温度
+- `BatteryMonitor.swift` … IOKit (`IOPS*` + AppleSmartBattery) で残量/電源/充電中/容量/サイクル/温度
+- `BatteryStatusItem.swift` … **2 つ目の `NSStatusItem`**。チョコの板チョコでバッテリー残量を
+  表示する（旧 `blackthunder-battery` の `ChocoRenderer` を統合）。走るキャラはフレーム差し替え
+  で動くのに対し、こちらは独自タイマー（60 秒）で残量に応じて画像を生成し直す。`chocolate.png`
+  は `Resources/` 直下に置き、`build_app.sh` がバンドルへコピーする
 - `NetworkMonitor.swift` … `getifaddrs` で上り下り速度、`SystemConfiguration` で主要IFとローカルIP
 - `ClaudeUsageMonitor.swift` … `npx ccusage --json` でトークン数を取得
 - `DashboardView.swift` … スパークライン / 使用率バーの自作ビュー
