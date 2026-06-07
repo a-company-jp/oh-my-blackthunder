@@ -94,7 +94,9 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const identity: IngestIdentity = {
     githubId,
-    login: asString(body.login) ?? `gh_${githubId}`,
+    // gh_<id> は login ではないので合成しない。無ければ空のまま渡す。
+    // ingest 側が「本物の login のときだけ上書き」するので既存の login は消えない。
+    login: asString(body.login) ?? "",
     displayName: asString(body.displayName) ?? null,
     avatarUrl: asString(body.avatarUrl) ?? "",
   };

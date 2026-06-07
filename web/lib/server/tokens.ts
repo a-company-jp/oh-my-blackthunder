@@ -15,14 +15,37 @@ import { createHash, randomBytes } from "node:crypto";
 import { adminDb } from "@/lib/server/firebase-admin";
 import {
   COLLECTIONS,
+  isRealLogin,
   type ApiTokenDoc,
   type ClientApp,
+  type UserDoc,
 } from "@/lib/shared/schema";
 
 /** Identity fields stored alongside a minted token for display/audit. */
 export interface TokenIdentity {
   githubId: number;
   login: string;
+}
+
+/**
+ * 連携・トークン発行時に使う「本物の login」を解決する。
+ * Firebase ID トークンは GitHub login を確実には含まないので、
+ *   トークンの login（本物のみ） → 既存 UserDoc.login（ingest 済みの本物） → ""
+ * の順で解決する。gh_<id> は login ではないので決して合成しない。
+ */
+export async function resolveLogin(
+  uid: string,
+  tokenLogin: string | undefined,
+): Promise<string> {
+  if (isRealLogin(tokenLogin)) return tokenLogin;
+  try {
+    const snap = await adminDb().collection(COLLECTIONS.users).doc(uid).get();
+    const stored = snap.exists ? (snap.data() as UserDoc).login : undefined;
+    if (isRealLogin(stored)) return stored;
+  } catch (err) {
+    console.error("[tokens] failed to read stored login", (err as Error).message);
+  }
+  return "";
 }
 
 /** Resolved identity from a verified app token (used by /api/ingest). */

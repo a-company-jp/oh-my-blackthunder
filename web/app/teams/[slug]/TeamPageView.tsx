@@ -22,6 +22,8 @@ import {
   subscribeTeamMembers,
 } from "@/lib/client/firestore";
 import {
+  displayNameFor,
+  isRealLogin,
   uidForGithubId,
   type TeamDoc,
   type TeamMemberDoc,
@@ -179,7 +181,7 @@ export function TeamPageView({ slug }: { slug: string }) {
               >
                 <Rank rank={i + 1} className="!w-9" />
                 <Link
-                  href={`/u/${m.login}`}
+                  href={`/u/${m.uid}`}
                   className="flex min-w-0 flex-1 items-center gap-3 transition hover:brightness-110"
                 >
                   {m.avatarUrl ? (
@@ -198,7 +200,11 @@ export function TeamPageView({ slug }: { slug: string }) {
                   <span className="min-w-0">
                     <span className="flex items-center gap-1.5">
                       <span className="truncate font-bold text-white">
-                        {m.displayName?.trim() || m.login}
+                        {displayNameFor({
+                          displayName: m.displayName,
+                          login: m.login,
+                          githubId: Number(m.uid.replace(/^gh_/, "")),
+                        })}
                       </span>
                       {m.role === "owner" ? (
                         <span className="bt-chip border-thunder-yellow/60 bg-thunder-yellow/15 text-[0.65rem] text-thunder-yellow">
@@ -207,7 +213,8 @@ export function TeamPageView({ slug }: { slug: string }) {
                       ) : null}
                     </span>
                     <span className="block truncate text-xs text-white/50">
-                      @{m.login} · {relativeTimeJa(m.joinedAtMs)}参加
+                      {isRealLogin(m.login) ? `@${m.login} · ` : ""}
+                      {relativeTimeJa(m.joinedAtMs)}参加
                     </span>
                   </span>
                 </Link>

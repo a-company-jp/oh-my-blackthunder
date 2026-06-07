@@ -22,6 +22,32 @@ export function uidForGithubId(githubId: number | string): string {
   return `gh_${Number(githubId)}`;
 }
 
+/**
+ * 「本物の GitHub login か」を判定する。
+ * GitHub の login(ユーザー名)は全員必ず持つので、欠落時に過去に作った
+ * `gh_<githubId>` という合成値や空文字を **login として保存・表示しない** ための番人。
+ * これらは表示用の名前ではないので false を返す（呼び出し側は上書きを避ける／別フォールバックする）。
+ */
+export function isRealLogin(login: string | null | undefined): login is string {
+  return typeof login === "string" && login.length > 0 && !/^gh_\d+$/.test(login);
+}
+
+/**
+ * リーダーボード／プロフィールに出す表示名を決める。
+ *   displayName(設定済み) → login(GitHub ユーザー名) → #<githubId>(最終手段)
+ * gh_<id> は表示名として使わない（gh_ プレフィックスは UI に出さない）。
+ */
+export function displayNameFor(user: {
+  displayName?: string | null;
+  login?: string | null;
+  githubId?: number;
+}): string {
+  const name = user.displayName?.trim();
+  if (name) return name;
+  if (isRealLogin(user.login)) return user.login;
+  return user.githubId ? `#${user.githubId}` : "";
+}
+
 // ---------------------------------------------------------------------------
 // Collections
 // ---------------------------------------------------------------------------
@@ -69,7 +95,7 @@ export interface UserDoc {
   uid: string; // mirror of doc id = gh_<githubId>
   githubId: number; // STABLE join key (immutable across login renames)
   login: string; // current GitHub login (display; mutable)
-  loginLower: string; // lowercased mirror for case-insensitive /u/[login] lookup
+  loginLower: string; // lowercased login mirror for case-insensitive lookups
   displayName: string | null;
   avatarUrl: string;
 
@@ -115,7 +141,8 @@ export interface EventDoc {
 
 /**
  * users/{uid}/daily/{yyyymmdd} — public daily rollup powering the profile feed.
- * `day` is zero-padded UTC yyyymmdd, so lexicographic order == chronological.
+ * `day` is zero-padded JST(UTC+9) yyyymmdd, so lexicographic order == chronological.
+ * 日次の境界は JST 0:00（日本のユーザー基準）。固定オフセットなので順序は保たれる。
  */
 export interface DailyDoc {
   day: string;
@@ -256,8 +283,8 @@ export interface IngestResponse {
 }
 
 // Safety caps (enforced server-side; clients should chunk to stay under them).
+// 注: 本数（bars）には上限を設けない（1日あたりの上限を撤廃）。NaN/負値のみ ingest 側で弾く。
 export const MAX_EVENTS_PER_REQUEST = 500;
-export const MAX_BARS_PER_EVENT = 1000; // sanity ceiling against spoofed bars
 export const MAX_EATS_PER_EVENT = 10;
 
 // ---------------------------------------------------------------------------

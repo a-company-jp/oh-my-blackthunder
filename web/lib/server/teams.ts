@@ -23,6 +23,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/server/firebase-admin";
 import {
   COLLECTIONS,
+  isRealLogin,
   type TeamDoc,
   type TeamInviteDoc,
   type TeamMemberDoc,
@@ -130,7 +131,9 @@ function memberSnapshotFields(
   TeamMemberDoc,
   "login" | "loginLower" | "displayName" | "avatarUrl" | "bars" | "blackThunderCount"
 > {
-  const login = user?.login ?? actor.login ?? `gh_${actor.githubId}`;
+  // gh_<id> は login ではないので合成しない。本物の login を優先し、
+  // 無ければ空（次回 ingest／プロフィール表示で UI が login に正しくフォールバックする）。
+  const login = [user?.login, actor.login].find(isRealLogin) ?? "";
   return {
     login,
     loginLower: login.toLowerCase(),

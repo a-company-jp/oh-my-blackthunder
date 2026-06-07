@@ -15,7 +15,9 @@ interface ProfileActivityProps {
   days?: number;
 }
 
-/** yyyymmdd -> "M/D (曜)" */
+/** yyyymmdd (JST) -> "M/D (曜)"。
+ *  day はカレンダー日付の数字そのもの。UTC で組み立てて曜日を読むのは
+ *  タイムゾーン変換ではなく曜日算出のためで、JST キーでも正しい。 */
 function formatDay(day: string): string {
   if (day.length !== 8) return day;
   const y = Number(day.slice(0, 4));

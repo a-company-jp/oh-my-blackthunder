@@ -42,8 +42,8 @@ import { adminDb } from "@/lib/server/firebase-admin";
 import { computeZakuzakuScore } from "@/lib/shared/score";
 import {
   COLLECTIONS,
-  MAX_BARS_PER_EVENT,
   MAX_EATS_PER_EVENT,
+  isRealLogin,
   uidForGithubId,
   type DeviceDoc,
   type EatSource,
@@ -82,9 +82,12 @@ export interface ApplyResult {
 /** Allow up to ~5 minutes of clock skew; reject anything further in the future. */
 const MAX_FUTURE_SKEW_MS = 5 * 60_000;
 
-/** UTC yyyymmdd for the daily rollup doc id. */
-function utcDayKey(tsMs: number): string {
-  const d = new Date(tsMs);
+/** JST(Asia/Tokyo, UTC+9, DST なし) の yyyymmdd を日次ロールアップの doc id に使う。
+ *  日付の境界を JST 0:00 に合わせるため、UTC+9 ぶんずらしてから UTC 成分を読む。
+ *  固定オフセットなので yyyymmdd の辞書順 = 時系列順は維持される。 */
+const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
+function jstDayKey(tsMs: number): string {
+  const d = new Date(tsMs + JST_OFFSET_MS);
   const y = d.getUTCFullYear().toString().padStart(4, "0");
   const m = (d.getUTCMonth() + 1).toString().padStart(2, "0");
   const day = d.getUTCDate().toString().padStart(2, "0");
@@ -119,19 +122,15 @@ function validateEvent(event: IngestEvent, nowMs: number): void {
     throw new IngestValidationError(`event.tsMs out of range for ${event.eventId}`);
   }
   if (event.kind === "bars") {
+    // 本数に上限は設けない（1日あたりの上限を撤廃）。NaN/Infinity/非正のみ弾く。
     if (!Number.isFinite(event.bars) || event.bars <= 0) {
       throw new IngestValidationError(
         `bars must be a finite positive number (${event.eventId})`,
       );
     }
-    if (event.bars > MAX_BARS_PER_EVENT) {
-      throw new IngestValidationError(`bars exceeds MAX_BARS_PER_EVENT (${event.eventId})`);
-    }
     if (
       event.cumulativeBars !== undefined &&
-      (!Number.isFinite(event.cumulativeBars) ||
-        event.cumulativeBars < 0 ||
-        event.cumulativeBars > MAX_BARS_PER_EVENT * 10_000)
+      (!Number.isFinite(event.cumulativeBars) || event.cumulativeBars < 0)
     ) {
       throw new IngestValidationError(
         `cumulativeBars must be a finite non-negative number (${event.eventId})`,
@@ -441,7 +440,7 @@ export async function applyEvents(
 
     for (const plan of plans) {
       const { event } = plan;
-      const day = utcDayKey(event.tsMs);
+      const day = jstDayKey(event.tsMs);
 
       if (event.kind === "bars" && plan.barsDelta > 0) {
         barsDeltaTotal += plan.barsDelta;
@@ -546,11 +545,14 @@ export async function applyEvents(
     const newDeviceTotal = (existing?.deviceCount ?? 0) + newDeviceCount;
 
     if (!userSnap.exists) {
+      // 初回作成。login が本物でなければ空で作る（gh_<id> は保存しない）。
+      // 次回の ingest で本物の login が来たら自己修復する。
+      const initialLogin = isRealLogin(identity.login) ? identity.login : "";
       const created: UserDoc = {
         uid,
         githubId: identity.githubId,
-        login: identity.login,
-        loginLower: identity.login.toLowerCase(),
+        login: initialLogin,
+        loginLower: initialLogin.toLowerCase(),
         displayName: identity.displayName,
         avatarUrl: identity.avatarUrl,
         zakuzakuScore: newScore,
@@ -589,12 +591,16 @@ export async function applyEvents(
       // which is what we want for byProvider.<p>.bars / eatBySource.<s>.
       const update: Record<string, unknown> = {
         githubId: identity.githubId,
-        login: identity.login,
-        loginLower: identity.login.toLowerCase(),
         displayName: identity.displayName,
         avatarUrl: identity.avatarUrl,
         updatedAtMs: nowMs,
       };
+      // login は本物（gh_<id> や空でない）のときだけ書く。欠落しているのに
+      // 上書きすると、過去に ingest 済みの正しい login を消してしまうため。
+      if (isRealLogin(identity.login)) {
+        update.login = identity.login;
+        update.loginLower = identity.login.toLowerCase();
+      }
       if (barsDeltaTotal > 0) {
         update.totalBars = FieldValue.increment(barsDeltaTotal);
         update["scoreComponents.bars"] = FieldValue.increment(barsDeltaTotal);

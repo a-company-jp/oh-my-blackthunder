@@ -12,7 +12,7 @@ import { CountBadge } from "@/app/components/CountBadge";
 import { CrunchBurst } from "@/app/components/CrunchBurst";
 import { Rank } from "@/app/components/Rank";
 import { ScoreBadge } from "@/app/components/ScoreBadge";
-import type { UserDoc } from "@/lib/shared/schema";
+import { displayNameFor, type UserDoc } from "@/lib/shared/schema";
 
 interface LeaderboardRowProps {
   user: UserDoc;
@@ -87,7 +87,7 @@ export function LeaderboardRow({ user, rank, highlight = false }: LeaderboardRow
     return () => clearTimeout(t);
   }, [rank]);
 
-  const displayName = user.displayName?.trim() || user.login;
+  const displayName = displayNameFor(user);
 
   return (
     <li
@@ -109,7 +109,7 @@ export function LeaderboardRow({ user, rank, highlight = false }: LeaderboardRow
         <Rank rank={rank} />
 
         <Link
-          href={`/u/${user.login}`}
+          href={`/u/${user.githubId}`}
           className="flex min-w-0 flex-1 items-center gap-3 transition hover:brightness-110"
         >
           {user.avatarUrl ? (

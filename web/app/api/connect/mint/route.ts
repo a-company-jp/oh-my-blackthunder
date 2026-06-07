@@ -15,7 +15,7 @@
 import { NextResponse } from "next/server";
 
 import { FirebaseAuthError, verifyFirebaseUser } from "@/lib/server/auth";
-import { AppTokenError, isClientApp, mintToken } from "@/lib/server/tokens";
+import { AppTokenError, isClientApp, mintToken, resolveLogin } from "@/lib/server/tokens";
 import type { ClientApp } from "@/lib/shared/schema";
 
 export const runtime = "nodejs";
@@ -119,7 +119,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const state = typeof body.state === "string" ? body.state : undefined;
   const label = typeof body.label === "string" ? body.label : null;
 
-  const login = user.login ?? `gh_${user.githubId}`;
+  const login = await resolveLogin(user.uid, user.login);
   try {
     const minted = await mintToken(
       user.uid,

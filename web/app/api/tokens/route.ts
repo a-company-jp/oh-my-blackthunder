@@ -15,6 +15,7 @@ import {
   isClientApp,
   listTokens,
   mintToken,
+  resolveLogin,
   revokeToken,
 } from "@/lib/server/tokens";
 import type { ClientApp } from "@/lib/shared/schema";
@@ -55,9 +56,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     typeof body.label === "string" ? body.label : null;
 
   try {
+    const login = await resolveLogin(user.uid, user.login);
     const minted = await mintToken(
       user.uid,
-      { githubId: user.githubId, login: user.login ?? `gh_${user.githubId}` },
+      { githubId: user.githubId, login },
       body.app as ClientApp,
       label,
     );

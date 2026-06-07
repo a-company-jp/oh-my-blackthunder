@@ -9,7 +9,7 @@ import { CountBadge } from "@/app/components/CountBadge";
 import { EatButton } from "@/app/components/EatButton";
 import { ScoreBadge } from "@/app/components/ScoreBadge";
 import { relativeTimeJa } from "@/lib/format";
-import type { UserDoc } from "@/lib/shared/schema";
+import { displayNameFor, isRealLogin, type UserDoc } from "@/lib/shared/schema";
 
 interface ProfileCardProps {
   user: UserDoc;
@@ -49,7 +49,7 @@ export function ProfileCard({
   countDelta = 0,
   onOptimisticEat,
 }: ProfileCardProps) {
-  const displayName = user.displayName?.trim() || user.login;
+  const displayName = displayNameFor(user);
 
   return (
     <section className="bt-panel relative overflow-hidden">
@@ -74,14 +74,16 @@ export function ProfileCard({
             <h1 className="truncate font-display text-2xl font-extrabold leading-tight text-white sm:text-3xl">
               {displayName}
             </h1>
-            <a
-              href={`https://github.com/${user.login}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-base text-white/60 transition hover:text-thunder-yellow"
-            >
-              @{user.login}
-            </a>
+            {isRealLogin(user.login) ? (
+              <a
+                href={`https://github.com/${user.login}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-base text-white/60 transition hover:text-thunder-yellow"
+              >
+                @{user.login}
+              </a>
+            ) : null}
             <p className="mt-1 text-xs text-white/40">
               最終アクティビティ: {relativeTimeJa(user.lastEventAtMs)}
             </p>
