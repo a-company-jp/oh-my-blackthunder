@@ -30,6 +30,38 @@
 - 取得は重いのでバックグラウンドで実行し、起動時 + 15 分ごと + メニューの「🍫 使用量を更新」で更新
 - 前提: `node` / `npx` が使えること（Homebrew 等）。アプリはログインシェル `zsh -lc` 経由で `npx` を解決
 
+## Install via Homebrew
+
+公開済みの GitHub Release から、ビルド済みバイナリを Homebrew で導入できます。
+
+```bash
+# tap を追加してからインストール
+brew tap a-company-jp/tap && brew install runthunder
+
+# もしくは 1 行で（tap を明示）
+brew install a-company-jp/tap/runthunder
+```
+
+インストール後はメニューバー常駐アプリとしてバイナリから起動します（Dock アイコンは出ません）:
+
+```bash
+runthunder
+```
+
+> メモ
+>
+> - `brew tap a-company-jp/tap` は `a-company-jp/homebrew-tap` リポジトリを参照します。
+> - **リリース（GitHub Release の publish）が CI ワークフローを起動**します
+>   （[`.github/workflows/runthunder-release.yml`](../.github/workflows/runthunder-release.yml)）。
+>   ワークフローは `swift build -c release` でビルド → tarball を Release に添付 →
+>   tap の `Formula/runthunder.rb`（url + sha256）を自動更新します。
+> - tap への push には `HOMEBREW_TAP_TOKEN`（tap リポジトリへの `repo` スコープ PAT）の
+>   シークレット設定が必要です。未設定の場合はこのリポジトリ同梱の
+>   [`Formula/runthunder.rb`](../Formula/runthunder.rb) を使って
+>   `brew install --formula ./Formula/runthunder.rb` でもインストールできます。
+> - Homebrew 版はバイナリ単体のため、メニューバーのキャラはコード生成の仮フレームで動作します
+>   （本番のコマ画像を使いたい場合は下記「ビルド & 起動」で `.app` を生成してください）。
+
 ## ビルド & 起動
 
 ```bash
