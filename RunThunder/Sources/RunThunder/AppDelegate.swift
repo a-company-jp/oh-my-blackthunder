@@ -3,6 +3,7 @@ import AppKit
 final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private var statusItem: NSStatusItem!
+    private let batteryStatusItem = BatteryStatusItem()
     private let popover = NSPopover()
     private let dashboard = DashboardViewController()
 
@@ -49,6 +50,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case loginItem = 22
         case templateIcon = 23
         case showBlackThunder = 24
+        case showBatteryBar = 25
         case scopeToday = 30
         case scopeTotal = 31
         case leaderboardStatus = 40
@@ -83,6 +85,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         popover.appearance = NSAppearance(named: .darkAqua)
 
         buildSettingsMenu()
+
+        // 2 つ目のアイコン（チョコのバッテリー表示）。走るキャラとは独立した
+        // NSStatusItem を持ち、独自タイマーで更新する。バッテリー非搭載機では出ない。
+        batteryStatusItem.onQuit = { [weak self] in self?.quit() }
+        batteryStatusItem.setVisible(prefs.showBatteryBar)
 
         // 基準値の取得（CPU/ネットワークは初回0）。
         _ = cpuMonitor.sample()
@@ -237,6 +244,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         addToggle(to: menu, title: "使用率を数値で表示", tag: .showText, action: #selector(toggleShowText))
         addToggle(to: menu, title: "🍫 個数をメニューバーに表示", tag: .showBlackThunder, action: #selector(toggleShowBlackThunder))
+        addToggle(to: menu, title: "🔋 チョコでバッテリーを表示", tag: .showBatteryBar, action: #selector(toggleShowBatteryBar))
         addToggle(to: menu, title: "メニューバーの色に追従", tag: .templateIcon, action: #selector(toggleTemplate))
         addToggle(to: menu, title: "高負荷を通知", tag: .notify, action: #selector(toggleNotify))
         addToggle(to: menu, title: "ログイン時に起動", tag: .loginItem, action: #selector(toggleLoginItem))
@@ -269,6 +277,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.item(withTag: Tag.targetNetwork.rawValue)?.state = prefs.target == .network ? .on : .off
         menu.item(withTag: Tag.showText.rawValue)?.state = prefs.showUsageText ? .on : .off
         menu.item(withTag: Tag.showBlackThunder.rawValue)?.state = prefs.showBlackThunder ? .on : .off
+        menu.item(withTag: Tag.showBatteryBar.rawValue)?.state = prefs.showBatteryBar ? .on : .off
         menu.item(withTag: Tag.templateIcon.rawValue)?.state = prefs.templateIcon ? .on : .off
         menu.item(withTag: Tag.notify.rawValue)?.state = prefs.notifyHighUsage ? .on : .off
         menu.item(withTag: Tag.loginItem.rawValue)?.state = LoginItem.isEnabled ? .on : .off
@@ -303,6 +312,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         prefs.showBlackThunder.toggle()
         refreshMenuStates()
         updateStatusText()
+    }
+
+    @objc private func toggleShowBatteryBar() {
+        prefs.showBatteryBar.toggle()
+        batteryStatusItem.setVisible(prefs.showBatteryBar)
+        refreshMenuStates()
     }
 
     @objc private func toggleTemplate() {

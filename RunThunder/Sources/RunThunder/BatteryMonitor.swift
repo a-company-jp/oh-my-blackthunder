@@ -25,6 +25,8 @@ final class BatteryMonitor {
             stats.powerSource = (state == kIOPSACPowerValue) ? "電源アダプタ" : "バッテリー"
         }
 
+        stats.isCharging = (desc[kIOPSIsChargingKey] as? Bool) ?? false
+
         readSmartBattery(into: &stats)
         return stats
     }

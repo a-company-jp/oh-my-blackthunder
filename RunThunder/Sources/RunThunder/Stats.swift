@@ -26,6 +26,7 @@ struct StorageStats {
 struct BatteryStats {
     var percent: Double = 0             // 0.0〜1.0
     var powerSource: String = "—"
+    var isCharging: Bool = false        // 充電中か（メニューバーの稲妻表示に使う）
     var maxCapacityPercent: Double?     // バッテリー最大容量(健全性)
     var cycleCount: Int?
     var temperatureC: Double?

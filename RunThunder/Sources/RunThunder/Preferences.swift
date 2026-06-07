@@ -49,6 +49,7 @@ final class Preferences {
         static let templateIcon = "templateIcon"
         static let showBlackThunder = "showBlackThunder"
         static let blackThunderScope = "blackThunderScope"
+        static let showBatteryBar = "showBatteryBar"
     }
 
     private init() {
@@ -59,6 +60,7 @@ final class Preferences {
             Key.templateIcon: false,
             Key.showBlackThunder: false,
             Key.blackThunderScope: BlackThunderScope.today.rawValue,
+            Key.showBatteryBar: true,
         ])
     }
 
@@ -92,5 +94,11 @@ final class Preferences {
     var blackThunderScope: BlackThunderScope {
         get { BlackThunderScope(rawValue: defaults.string(forKey: Key.blackThunderScope) ?? "") ?? .today }
         set { defaults.set(newValue.rawValue, forKey: Key.blackThunderScope) }
+    }
+
+    /// 2 つ目のメニューバーアイコン（チョコのバッテリー表示）を出すか。
+    var showBatteryBar: Bool {
+        get { defaults.bool(forKey: Key.showBatteryBar) }
+        set { defaults.set(newValue, forKey: Key.showBatteryBar) }
     }
 }
