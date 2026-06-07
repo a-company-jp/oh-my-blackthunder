@@ -60,6 +60,11 @@ jobs:
   # --------------------------------------------------------------------------
   deploy:
     name: build · push · deploy
+    # Skip until GCP Workload Identity Federation is configured: set the
+    # WIF_PROVIDER repo Actions variable after `terraform apply` (web/terraform).
+    # Until then this job is skipped, so pushes to main stay green instead of
+    # failing at the auth step.
+    if: ${{ vars.WIF_PROVIDER != '' }}
     runs-on: ubuntu-latest
     outputs:
       url: ${{ steps.deploy.outputs.url }}
@@ -124,6 +129,8 @@ jobs:
   # --------------------------------------------------------------------------
   rules:
     name: deploy firestore rules
+    # Same gate as deploy: skip until WIF is configured (keeps main green).
+    if: ${{ vars.WIF_PROVIDER != '' }}
     runs-on: ubuntu-latest
     defaults:
       run:
