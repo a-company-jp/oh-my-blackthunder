@@ -9,6 +9,8 @@ final class DashboardViewController: NSViewController {
     /// リーダーボードへのログイン/ログアウトボタンの動作。
     /// 未ログイン時はログイン（/connect）を、ログイン済み時はログアウトを起動する。
     var onToggleLeaderboard: (() -> Void)?
+    /// 「Homebrew でインストール」ボタンの動作（インストールコマンドのモーダルを開く）。
+    var onShowHomebrewInstall: (() -> Void)?
 
     private let dataWidth: CGFloat = 250
 
@@ -70,10 +72,13 @@ final class DashboardViewController: NSViewController {
         bottomSpacer.heightAnchor.constraint(equalToConstant: 44).isActive = true
         dataStack.addArrangedSubview(bottomSpacer)
 
-        // 右側ボタン列（ログイン → アクティビティ → 終了）
+        // 右側ボタン列（Homebrew → ログイン → アクティビティ → 終了）
         loginButton = makeButton(symbol: "person.crop.circle.badge.plus", title: "ログイン", action: #selector(toggleLeaderboard))
         accountController = AccountButtonController(button: loginButton, avatarDiameter: 26)
+        // Homebrew のロゴ（ビールジョッキ）。押すとインストールコマンドのモーダルを開く。
+        let brewButton = makeButton(symbol: "mug.fill", title: "Homebrew", action: #selector(showHomebrewInstall))
         let buttonStack = NSStackView(views: [
+            brewButton,
             loginButton,
             makeButton(symbol: "waveform.path.ecg", title: "アクティビティ", action: #selector(openActivityMonitor)),
             makeButton(symbol: "power", title: "終了", action: #selector(quit)),
@@ -209,6 +214,7 @@ final class DashboardViewController: NSViewController {
     @objc private func openActivityMonitor() { onOpenActivityMonitor?() }
     @objc private func quit() { onQuit?() }
     @objc private func toggleLeaderboard() { onToggleLeaderboard?() }
+    @objc private func showHomebrewInstall() { onShowHomebrewInstall?() }
 
     // MARK: - UI 部品
 

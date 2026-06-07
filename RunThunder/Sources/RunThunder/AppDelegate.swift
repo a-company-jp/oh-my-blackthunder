@@ -76,6 +76,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         dashboard.onOpenActivityMonitor = { [weak self] in self?.openActivityMonitor() }
         dashboard.onQuit = { [weak self] in self?.quit() }
         dashboard.onToggleLeaderboard = { [weak self] in self?.toggleLeaderboardFromDashboard() }
+        dashboard.onShowHomebrewInstall = { [weak self] in self?.showHomebrewInstall() }
         popover.behavior = .transient
         popover.contentViewController = dashboard
         // 黒地のブラックサンダー配色に合わせ、枠・矢印もダーク外観に固定する。
@@ -144,6 +145,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let url = URL(fileURLWithPath: "/System/Applications/Utilities/Activity Monitor.app")
         NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
         popover.performClose(nil)
+    }
+
+    /// Homebrew インストールコマンドのモーダルを表示する。
+    /// ポップオーバー（.transient）はモーダル表示で閉じてしまうため、先に閉じる。
+    private func showHomebrewInstall() {
+        popover.performClose(nil)
+        HomebrewInstallModal().present()
     }
 
     @objc private func quit() {

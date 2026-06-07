@@ -42,6 +42,10 @@ brew tap a-company-jp/tap && brew install --cask runthunder
 brew install --cask a-company-jp/tap/runthunder
 ```
 
+> 💡 ダッシュボード（メニューバーアイコンをクリック）の右側にある 🍺 **Homebrew**
+> ボタンを押すと、上の `brew tap … && brew install --cask runthunder` をワンクリックで
+> コピーできるモーダルが開きます。
+
 インストールすると `RunThunder.app` が `/Applications` に入ります。起動（メニューバー常駐・Dock アイコンなし）:
 
 ```bash
