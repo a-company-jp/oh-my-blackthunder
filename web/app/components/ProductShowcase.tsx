@@ -71,21 +71,11 @@ const PRODUCTS: Product[] = [
     name: "RunThunder",
     tagline: "macOS メニューバー アプリ",
     description:
-      "デバイスごとのAIザクザク度を計測してランキングへ送信。スパークラインと使用率バーで、あなたのザクザクを毎日チェック。",
+      "デバイスごとのAIザクザク度を計測してランキングへ送信。走るブラックサンダーの隣に、板チョコでバッテリー残量も表示（食べると減る🔋）。",
     href: `${REPO_BASE}/RunThunder/README.md`,
     art: "/assets/monster/ike.png",
     accent: "text-thunder-yellow",
     rotate: "rotate-2",
-  },
-  {
-    name: "blackthunder-battery",
-    tagline: "おまけ ガジェット",
-    description:
-      "ブラックサンダーは電池になるのか? エネルギーあふれる実験プロジェクト。ザクザクの精神でなんでも作る。",
-    href: `${REPO_BASE}/blackthunder-battery/README.md`,
-    art: "/assets/sticker/battery.png",
-    accent: "text-thunder-red",
-    rotate: "-rotate-2",
   },
 ];
 
@@ -106,7 +96,6 @@ const PLATFORM_LOGOS: Record<string, string[]> = {
   "blackthunder-chrome": ["chrome"],
   "blackthunder-vscode": ["vscode"],
   RunThunder: ["apple"],
-  "blackthunder-battery": [],
 };
 
 function LogoChip({ logo }: { logo: string }) {
