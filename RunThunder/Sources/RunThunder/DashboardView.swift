@@ -183,6 +183,11 @@ final class BlackThunderTodayCard: NSView {
     private let noteLabel = NSTextField(labelWithString: "")
     private let gradient = CAGradientLayer()
 
+    /// ブラさんくん（バー画像）の「るんるんジャンプ」アニメーション用キー。
+    private static let jumpAnimationKey = "blasankun.runrun.jump"
+    /// 直近に適用した CPU 使用率（0〜1）。同じ値なら付け直さない。
+    private var lastCPUUsage: Double = -1
+
     private static let numberFormatter: NumberFormatter = {
         let f = NumberFormatter(); f.numberStyle = .decimal; return f
     }()
@@ -198,6 +203,64 @@ final class BlackThunderTodayCard: NSView {
     func shuffleBar() {
         guard let img = Self.barImages.randomElement() else { return }
         barImage.image = img
+    }
+
+    /// CPU 使用率（0〜1）に応じて、ブラさんくんを「るんるんジャンプ」させる。
+    /// 使用率が高いほどテンポよく・高く跳ねる。値が変わったときだけ付け直す。
+    func setCPUUsage(_ usage: Double) {
+        let clamped = min(max(usage, 0), 1)
+        // 1% 未満の変化では付け直さない（毎回のリセットでカクつかせないため）。
+        if abs(clamped - lastCPUUsage) < 0.01, barImage.layer?.animation(forKey: Self.jumpAnimationKey) != nil {
+            return
+        }
+        lastCPUUsage = clamped
+        applyJump(usage: clamped)
+    }
+
+    /// 使用率に応じたテンポ・高さの上下バウンド（＋微かな伸び縮み）を barImage に適用する。
+    private func applyJump(usage: Double) {
+        guard let layer = barImage.layer else { return }
+        // 伸び縮みの中心が画像中央になるように。translation はアンカーに依存しない。
+        layer.anchorPoint = CGPoint(x: 0.5, y: 0.5)
+
+        // テンポ: アイドル時はのんびり（約 1.1s/回）、フル稼働で軽快（約 0.32s/回）。
+        let period = 1.1 - (1.1 - 0.32) * usage
+        // 高さ: 使用率が上がるほど高く跳ねる（6〜16pt）。
+        let height = 6.0 + 10.0 * usage
+        // 伸び縮みの強さも使用率で少しだけ強める（最大でも控えめに）。
+        let squash = 0.03 + 0.05 * usage  // 着地で潰れる量
+        let stretch = 0.02 + 0.04 * usage // 跳躍中に伸びる量
+
+        // --- 上下のジャンプ（0→上→0）。autoreverses で「跳んで着地」を 1 周期に。---
+        let jump = CABasicAnimation(keyPath: "transform.translation.y")
+        jump.fromValue = 0
+        jump.toValue = height
+        jump.duration = period / 2
+        jump.autoreverses = true
+        jump.timingFunction = CAMediaTimingFunction(name: .easeOut) // 上りは減速＝山なり
+
+        // --- 微かなスクワッシュ＆ストレッチ（着地で潰れ、跳躍で伸びる）---
+        // キー: 着地(潰れ) → 上昇(縦伸び) → 頂点(等倍) → 下降(縦伸び) → 着地(潰れ)
+        let scaleY = CAKeyframeAnimation(keyPath: "transform.scale.y")
+        scaleY.values  = [1 - squash, 1 + stretch, 1.0, 1 + stretch, 1 - squash]
+        scaleY.keyTimes = [0, 0.18, 0.5, 0.82, 1.0]
+        scaleY.duration = period
+        scaleY.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+
+        // 縦に伸びるとき横は少し縮む（体積保存っぽく）。
+        let scaleX = CAKeyframeAnimation(keyPath: "transform.scale.x")
+        scaleX.values  = [1 + squash, 1 - stretch, 1.0, 1 - stretch, 1 + squash]
+        scaleX.keyTimes = [0, 0.18, 0.5, 0.82, 1.0]
+        scaleX.duration = period
+        scaleX.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+
+        let group = CAAnimationGroup()
+        group.animations = [jump, scaleY, scaleX]
+        group.duration = period
+        group.repeatCount = .infinity
+        group.isRemovedOnCompletion = false
+
+        layer.add(group, forKey: Self.jumpAnimationKey)
     }
 
     override init(frame frameRect: NSRect) {
@@ -230,6 +293,9 @@ final class BlackThunderTodayCard: NSView {
         barImage.translatesAutoresizingMaskIntoConstraints = false
         barImage.widthAnchor.constraint(equalToConstant: 96).isActive = true
         barImage.heightAnchor.constraint(equalToConstant: 64).isActive = true
+        // ジャンプ（translateY）で動かすためレイヤーバックドにする。
+        // translation はアンカーポイントに依存しないので、レイアウトのズレは生じない。
+        barImage.wantsLayer = true
 
         timesLabel.font = .systemFont(ofSize: 22, weight: .bold)
         timesLabel.textColor = BlackThunder.ink.withAlphaComponent(0.85)
