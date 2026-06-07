@@ -70,17 +70,22 @@ function isAllowedRedirectUri(raw: unknown): raw is string {
   return false;
 }
 
-/** Append token + state to the (already-validated) redirect URI. */
+/** Append token + state (+ identity) to the (already-validated) redirect URI. */
 function buildRedirectUrl(
   redirectUri: string,
   token: string,
   state: string | undefined,
+  identity: { githubId: number; login: string },
 ): string {
   const url = new URL(redirectUri);
   url.searchParams.set("token", token);
   if (typeof state === "string" && state.length > 0) {
     url.searchParams.set("state", state);
   }
+  // Pass the signed-in identity along so the client can show the avatar/name
+  // immediately, without waiting for the first /api/ingest round-trip.
+  url.searchParams.set("github_id", String(identity.githubId));
+  url.searchParams.set("login", identity.login);
   return url.toString();
 }
 
@@ -114,14 +119,18 @@ export async function POST(req: Request): Promise<NextResponse> {
   const state = typeof body.state === "string" ? body.state : undefined;
   const label = typeof body.label === "string" ? body.label : null;
 
+  const login = user.login ?? `gh_${user.githubId}`;
   try {
     const minted = await mintToken(
       user.uid,
-      { githubId: user.githubId, login: user.login ?? `gh_${user.githubId}` },
+      { githubId: user.githubId, login },
       body.app as ClientApp,
       label,
     );
-    const redirectUrl = buildRedirectUrl(body.redirect_uri, minted.token, state);
+    const redirectUrl = buildRedirectUrl(body.redirect_uri, minted.token, state, {
+      githubId: user.githubId,
+      login,
+    });
     return NextResponse.json({ redirectUrl }, { status: 200 });
   } catch (err) {
     if (err instanceof AppTokenError) return errorResponse(err.status, err.message);

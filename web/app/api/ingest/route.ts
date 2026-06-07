@@ -51,10 +51,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     identity = {
       githubId: resolved.githubId,
       login: resolved.login,
-      // The app-token path has no fresh GitHub profile; reuse the stored login as
-      // display name and leave the avatar to be refreshed via the web path.
+      // The app-token path has no fresh GitHub profile, but the numeric id is a
+      // stable handle to the GitHub avatar — so clients that only sync via the
+      // app token (e.g. RunThunder) still get an avatar on the web leaderboard.
       displayName: null,
-      avatarUrl: "",
+      avatarUrl: `https://avatars.githubusercontent.com/u/${resolved.githubId}`,
     };
   } catch (err) {
     if (err instanceof AppTokenError) {

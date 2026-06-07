@@ -275,6 +275,10 @@ final class LeaderboardClient {
         let items = comps.queryItems ?? []
         let token = items.first(where: { $0.name == "token" })?.value
         let state = items.first(where: { $0.name == "state" })?.value
+        // /connect/mint からアイデンティティも返ってくる（連携完了の瞬間に
+        // アイコン/名前を出すため。初回同期を待たずに済む）。
+        let login = items.first(where: { $0.name == "login" })?.value
+        let githubId = items.first(where: { $0.name == "github_id" })?.value.flatMap(Int.init)
 
         guard let state, state == pendingState else {
             self.respond(connection: connection, ok: false)
@@ -287,8 +291,10 @@ final class LeaderboardClient {
             return
         }
 
-        // 成功: トークンを保存してブラウザに成功ページを返す。
+        // 成功: トークン（あればユーザー情報も）を保存してブラウザに成功ページを返す。
         self.token = token
+        if let login, !login.isEmpty { self.login = login }
+        if let githubId, githubId > 0 { self.githubId = githubId }
         self.respond(connection: connection, ok: true)
         self.finishConnect(.success(()))
     }
