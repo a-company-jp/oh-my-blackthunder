@@ -73,6 +73,15 @@ open -a RunThunder
 >   Finder で右クリック →「開く」を選んでください。
 > - Cask 版は本番のコマ画像をバンドルに含むため、メニューバーのキャラは本番フレームで動作します。
 
+## 画像
+### AA 
+<img width="827" height="306" alt="CleanShot 2026-06-07 at 13 54 50@2x" src="https://github.com/user-attachments/assets/0289b8e6-a097-447b-84e6-4857871a6f83" />
+
+### AI使用量 ブラックサンダー個数カウント
+<img width="360" height="28" alt="CleanShot 2026-06-07 at 13 54 39@2x" src="https://github.com/user-attachments/assets/441d2d6e-309b-401e-9b8f-a4e4f67d075c" />
+<img width="560" height="36" alt="CleanShot 2026-06-07 at 13 54 34@2x" src="https://github.com/user-attachments/assets/65c53e12-dbc8-4b57-8107-cd1079fbbeab" />
+
+
 ## 注意点
 
 - **ログイン時に起動 / 通知** は、アプリが安定した場所にあること・コード署名が前提になる場合があります。
