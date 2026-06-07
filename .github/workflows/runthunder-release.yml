@@ -1,0 +1,221 @@
+name: RunThunder Release
+
+# Builds the RunThunder macOS menu-bar app (Swift Package Manager) into a proper
+# .app BUNDLE (universal, ad-hoc signed), zips it, attaches it to the GitHub Release,
+# and refreshes the Homebrew CASK so users can `brew install --cask runthunder`.
+#
+# RunThunder is a GUI menu-bar app that loads its frame images from inside the app
+# bundle (Bundle.main.resourceURL/Frames), so it MUST ship as a .app via a cask —
+# a bare CLI binary in a formula renders only placeholder frames and breaks
+# bundle-id features (SMAppService login item, prefs).
+#
+# Triggers:
+#   - release: published   -> normal flow, the published release's tag is used.
+#   - workflow_dispatch    -> manual run; pass an existing tag via the `tag` input.
+#
+# Required secrets:
+#   - GITHUB_TOKEN        : built-in, used to upload the release asset (no setup needed).
+#   - HOMEBREW_TAP_TOKEN  : a Personal Access Token (classic) with `repo` scope on the
+#                           tap repo a-company-jp/homebrew-tap. Used to push the updated
+#                           Casks/runthunder.rb to that repo. Create it in the tap repo
+#                           (or org) settings and add it as a repo secret here named
+#                           HOMEBREW_TAP_TOKEN.
+#                           If this secret is absent, the tap-push step is skipped; the
+#                           release still carries the RunThunder.app zip, which can be
+#                           installed manually (unzip into /Applications).
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag to build & publish (e.g. v1.0.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build, package & publish RunThunder
+    runs-on: macos-14
+    env:
+      # Owner/name of the external Homebrew tap repo.
+      TAP_REPO: a-company-jp/homebrew-tap
+      # Owner/name of THIS repo (where releases live).
+      RELEASE_REPO: a-company-jp/oh-my-blackthunder
+      # The `secrets` context is NOT allowed in step `if:` conditions, but it IS
+      # allowed in a job-level env value. Surface a boolean presence flag here so
+      # the steps below can gate on `env.HAS_TAP_TOKEN` instead of `secrets.*`.
+      HAS_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN != '' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select latest stable Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Show toolchain
+        run: |
+          swift --version
+          xcodebuild -version
+
+      - name: Resolve version / tag
+        id: ver
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            # release event: github.ref_name is the tag, github.event.release.tag_name is canonical.
+            TAG="${{ github.event.release.tag_name }}"
+            if [ -z "$TAG" ]; then
+              TAG="${{ github.ref_name }}"
+            fi
+          fi
+          if [ -z "$TAG" ]; then
+            echo "::error::Could not determine release tag."
+            exit 1
+          fi
+          # Strip a leading 'v' for the Homebrew version string (e.g. v1.2.3 -> 1.2.3).
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Resolved tag=$TAG version=$VERSION"
+
+      - name: Build .app bundle (universal, ad-hoc signed)
+        shell: bash
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+          # Universal so both Apple Silicon and Intel Macs can run it.
+          SWIFT_BUILD_FLAGS: "--arch arm64 --arch x86_64"
+        run: |
+          set -euo pipefail
+          ./RunThunder/build_app.sh
+          APP="RunThunder/RunThunder.app"
+          test -d "$APP" || { echo "::error::$APP was not produced"; exit 1; }
+          file "$APP/Contents/MacOS/RunThunder"
+          codesign -dv --verbose=2 "$APP" || true
+          # Sanity: the real frame images must be inside the bundle.
+          ls "$APP/Contents/Resources/Frames" | head
+
+      - name: Package .app zip + sha256
+        id: pkg
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.ver.outputs.version }}"
+          ZIP="RunThunder-${VERSION}-macos.zip"
+          # ditto is the macOS-correct way to zip a .app (preserves bundle layout,
+          # symlinks, extended attrs and the code signature).
+          ditto -c -k --sequesterRsrc --keepParent RunThunder/RunThunder.app "$ZIP"
+          SHA256="$(shasum -a 256 "$ZIP" | awk '{print $1}')"
+          echo "zip=$ZIP" >> "$GITHUB_OUTPUT"
+          echo "sha256=$SHA256" >> "$GITHUB_OUTPUT"
+          echo "Built $ZIP sha256=$SHA256"
+
+      - name: Upload .app zip to the GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.tag }}
+          files: ${{ steps.pkg.outputs.zip }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Render Homebrew cask
+        id: cask
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.ver.outputs.version }}"
+          TAG="${{ steps.ver.outputs.tag }}"
+          ZIP="${{ steps.pkg.outputs.zip }}"
+          SHA256="${{ steps.pkg.outputs.sha256 }}"
+          URL="https://github.com/${RELEASE_REPO}/releases/download/${TAG}/${ZIP}"
+
+          mkdir -p Casks
+          cat > Casks/runthunder.rb <<RUBY
+          # frozen_string_literal: true
+
+          # RunThunder Homebrew cask.
+          # Regenerated on each release by .github/workflows/runthunder-release.yml
+          # — do not edit version/sha256/url by hand.
+          cask "runthunder" do
+            version "${VERSION}"
+            sha256 "${SHA256}"
+
+            url "${URL}"
+            name "RunThunder"
+            desc "RunCat-style macOS menu-bar app with a Black Thunder character (CPU/MEM/NET, Claude usage)"
+            homepage "https://github.com/a-company-jp/oh-my-blackthunder"
+
+            depends_on macos: ">= :ventura"
+
+            app "RunThunder.app"
+
+            # The app is ad-hoc signed (not notarized), so strip the quarantine flag
+            # after install to avoid Gatekeeper blocking the first launch.
+            postflight do
+              system_command "/usr/bin/xattr",
+                             args: ["-dr", "com.apple.quarantine", "#{appdir}/RunThunder.app"]
+            end
+
+            uninstall quit: "io.local.runthunder"
+
+            zap trash: [
+              "~/Library/Preferences/io.local.runthunder.plist",
+            ]
+
+            caveats <<~EOS
+              RunThunder is an unsigned (ad-hoc) menu-bar app. If macOS still blocks it
+              on first launch, right-click RunThunder.app in /Applications and choose
+              Open, or run:
+                xattr -dr com.apple.quarantine /Applications/RunThunder.app
+            EOS
+          end
+          RUBY
+
+          echo "Rendered Casks/runthunder.rb:"
+          cat Casks/runthunder.rb
+
+      - name: Push cask to the Homebrew tap
+        if: ${{ env.HAS_TAP_TOKEN == 'true' }}
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.ver.outputs.version }}"
+          WORK="$(mktemp -d)"
+          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/${TAP_REPO}.git" "$WORK"
+          mkdir -p "$WORK/Casks"
+          cp Casks/runthunder.rb "$WORK/Casks/runthunder.rb"
+          # Drop the obsolete formula (replaced by the cask) so `brew install
+          # runthunder` resolves unambiguously to the cask.
+          rm -f "$WORK/Formula/runthunder.rb"
+          cd "$WORK"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No cask changes to push."
+          else
+            git commit -m "runthunder ${VERSION}"
+            git push origin HEAD
+            echo "Pushed runthunder ${VERSION} cask to ${TAP_REPO}."
+          fi
+
+      - name: Note when tap token is missing
+        if: ${{ env.HAS_TAP_TOKEN != 'true' }}
+        shell: bash
+        run: |
+          echo "::warning::HOMEBREW_TAP_TOKEN is not set — skipped pushing the cask to ${TAP_REPO}."
+          echo "Add a PAT with 'repo' scope on the tap as the HOMEBREW_TAP_TOKEN secret to enable tap updates."
+          echo "Fallback: download RunThunder-<version>-macos.zip from the GitHub Release, unzip it,"
+          echo "and move RunThunder.app into /Applications."

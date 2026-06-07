@@ -53,3 +53,13 @@ resource "google_service_account_iam_member" "deployer_act_as_runtime" {
   role               = "roles/iam.serviceAccountUser"
   member             = "serviceAccount:${google_service_account.deployer.email}"
 }
+
+# firebase-tools runs an API-enablement precheck (serviceusage.services.get on
+# firestore.googleapis.com) before `deploy --only firestore:rules`. Without this
+# the rules job 403s ("Permission denied to get service"). serviceUsageConsumer
+# grants the services.get/list that precheck needs.
+resource "google_project_iam_member" "deployer_serviceusage_consumer" {
+  project = var.project_id
+  role    = "roles/serviceusage.serviceUsageConsumer"
+  member  = "serviceAccount:${google_service_account.deployer.email}"
+}

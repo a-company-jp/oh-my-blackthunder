@@ -30,6 +30,40 @@
 - 取得は重いのでバックグラウンドで実行し、起動時 + 15 分ごと + メニューの「🍫 使用量を更新」で更新
 - 前提: `node` / `npx` が使えること（Homebrew 等）。アプリはログインシェル `zsh -lc` 経由で `npx` を解決
 
+## Install via Homebrew (Cask)
+
+GUI のメニューバーアプリなので **Homebrew Cask**（`.app` バンドル）として配布します。
+
+```bash
+# tap を追加してからインストール
+brew tap a-company-jp/tap && brew install --cask runthunder
+
+# もしくは 1 行で（tap を明示）
+brew install --cask a-company-jp/tap/runthunder
+```
+
+インストールすると `RunThunder.app` が `/Applications` に入ります。起動（メニューバー常駐・Dock アイコンなし）:
+
+```bash
+open -a RunThunder
+```
+
+> メモ
+>
+> - `brew tap a-company-jp/tap` は `a-company-jp/homebrew-tap` リポジトリを参照します。
+> - **リリース（GitHub Release の publish）が CI ワークフローを起動**します
+>   （[`.github/workflows/runthunder-release.yml`](../.github/workflows/runthunder-release.yml)）。
+>   ワークフローは [`build_app.sh`](build_app.sh) で **`RunThunder.app`（ユニバーサル・アドホック署名）** をビルド →
+>   `ditto` で zip 化して Release に添付 → tap の `Casks/runthunder.rb`（url + sha256）を自動更新します。
+> - tap への push には `HOMEBREW_TAP_TOKEN`（tap リポジトリへの `repo` スコープ PAT）の
+>   シークレット設定が必要です。未設定でも Release には `RunThunder-<version>-macos.zip` が添付されるので、
+>   展開して `/Applications` に置けば手動インストールできます。
+> - **未署名（アドホック署名）アプリ**のため、Gatekeeper が初回起動をブロックする場合があります。
+>   Cask の `postflight` が quarantine 属性を自動除去しますが、手動なら
+>   `xattr -dr com.apple.quarantine /Applications/RunThunder.app` を実行するか、
+>   Finder で右クリック →「開く」を選んでください。
+> - Cask 版は本番のコマ画像をバンドルに含むため、メニューバーのキャラは本番フレームで動作します。
+
 ## ビルド & 起動
 
 ```bash
@@ -45,6 +79,12 @@ open RunThunder.app
 ```bash
 swift run
 ```
+
+## アプリアイコンを差し替える
+
+`Resources/AppIcon.png`（正方形・1024×1024 推奨）を置き換えて `./build_app.sh` を実行するだけ。
+ビルド時に `sips` + `iconutil` で `AppIcon.icns`（全サイズ）を生成し、バンドルに埋め込みます
+（Finder / Launchpad / About で表示。メニューバーのキャラは別途下記の `Frames`）。
 
 ## 本番のコマ画像に差し替える
 
