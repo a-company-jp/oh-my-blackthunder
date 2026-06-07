@@ -29,16 +29,9 @@ final class DashboardViewController: NSViewController {
     private let netTitle = DashboardViewController.titleLabel()
     private let netDetail = DashboardViewController.detailLabel()
 
-    private let claudeTitle = DashboardViewController.titleLabel()
-    private let claudeDetail = DashboardViewController.detailLabel()
+    private let todayCard = BlackThunderTodayCard()
 
     private var contentStack: NSStackView!
-
-    private static let tokenFormatter: NumberFormatter = {
-        let f = NumberFormatter()
-        f.numberStyle = .decimal
-        return f
-    }()
 
     override func loadView() {
         let dataStack = NSStackView()
@@ -61,11 +54,8 @@ final class DashboardViewController: NSViewController {
         batterySeparator = makeSeparator()
         dataStack.addArrangedSubview(batteryRow)
         dataStack.addArrangedSubview(batterySeparator)
-        // Network
+        // Network（データ部の最後の行）
         dataStack.addArrangedSubview(makeRow(symbol: "globe", title: netTitle, detail: netDetail))
-        dataStack.addArrangedSubview(makeSeparator())
-        // ブラックサンダー換算（Claude 使用量）
-        dataStack.addArrangedSubview(makeRow(symbol: "bolt.fill", title: claudeTitle, detail: claudeDetail))
         // 末尾に実体のあるスペーサ（edgeInsets.bottom は fittingSize に反映されないため）
         let bottomSpacer = NSView()
         bottomSpacer.translatesAutoresizingMaskIntoConstraints = false
@@ -86,7 +76,6 @@ final class DashboardViewController: NSViewController {
         content.orientation = .horizontal
         content.alignment = .top
         content.spacing = 14
-        content.edgeInsets = NSEdgeInsets(top: 14, left: 16, bottom: 0, right: 16)
         content.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
@@ -94,7 +83,36 @@ final class DashboardViewController: NSViewController {
             buttonStack.widthAnchor.constraint(equalToConstant: 92),
         ])
         contentStack = content
-        view = content
+
+        // 「今日のブラックサンダー」カードを一番上・横幅いっぱい（ボタン列含む全幅）に。
+        todayCard.translatesAutoresizingMaskIntoConstraints = false
+
+        let outer = NSStackView(views: [todayCard, content])
+        outer.orientation = .vertical
+        outer.alignment = .leading
+        outer.spacing = 12
+        outer.edgeInsets = NSEdgeInsets(top: 14, left: 16, bottom: 0, right: 16)
+        outer.translatesAutoresizingMaskIntoConstraints = false
+        // 同一階層（outer）に入ってから全幅制約を有効化する。
+        todayCard.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
+
+        // 最背面にブラックサンダーの断面背景を敷く。
+        let container = NSView()
+        let background = BlackThunderBackgroundView()
+        background.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(background)
+        container.addSubview(outer)
+        NSLayoutConstraint.activate([
+            background.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            background.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            background.topAnchor.constraint(equalTo: container.topAnchor),
+            background.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+            outer.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            outer.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            outer.topAnchor.constraint(equalTo: container.topAnchor),
+            outer.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+        ])
+        view = container
     }
 
     override func viewDidLayout() {
@@ -159,12 +177,7 @@ final class DashboardViewController: NSViewController {
 
         let todayBars = ClaudeUsageMonitor.bars(forTokens: snap.claudeTodayTokens)
         let totalBars = ClaudeUsageMonitor.bars(forTokens: snap.claudeTotalTokens)
-        claudeTitle.stringValue = String(format: "ブラックサンダー換算: %.1f本", todayBars)
-        claudeDetail.stringValue = String(
-            format: "今日: %.1f本分 (%@ tok)\n累計: %.1f本分 (%@ tok)",
-            todayBars, Self.tokenFormatter.string(from: NSNumber(value: snap.claudeTodayTokens)) ?? "0",
-            totalBars, Self.tokenFormatter.string(from: NSNumber(value: snap.claudeTotalTokens)) ?? "0"
-        )
+        todayCard.update(todayBars: todayBars, todayTokens: snap.claudeTodayTokens, totalBars: totalBars)
     }
 
     // MARK: - ボタン
@@ -174,11 +187,11 @@ final class DashboardViewController: NSViewController {
 
     // MARK: - UI 部品
 
-    private func makeRow(symbol: String, title: NSTextField, detail: NSTextField, extra: NSView? = nil) -> NSView {
+    private func makeRow(symbol: String, title: NSTextField, detail: NSTextField, extra: NSView? = nil, iconTint: NSColor = BlackThunder.gold) -> NSView {
         let icon = NSImageView()
         icon.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)
         icon.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 26, weight: .regular)
-        icon.contentTintColor = .labelColor
+        icon.contentTintColor = iconTint
         icon.translatesAutoresizingMaskIntoConstraints = false
         icon.setContentHuggingPriority(.required, for: .horizontal)
         NSLayoutConstraint.activate([
@@ -207,10 +220,10 @@ final class DashboardViewController: NSViewController {
     }
 
     private func makeSeparator() -> NSView {
-        let line = NSBox()
-        line.boxType = .separator
+        let line = JaggedSeparatorView()
         line.translatesAutoresizingMaskIntoConstraints = false
         line.widthAnchor.constraint(equalToConstant: dataWidth + 44).isActive = true
+        line.heightAnchor.constraint(equalToConstant: 7).isActive = true
         return line
     }
 
@@ -237,7 +250,7 @@ final class DashboardViewController: NSViewController {
     private static func titleLabel() -> NSTextField {
         let label = NSTextField(labelWithString: "")
         label.font = .systemFont(ofSize: 15, weight: .semibold)
-        label.textColor = .labelColor
+        label.textColor = BlackThunder.titleText
         label.lineBreakMode = .byTruncatingTail
         return label
     }
@@ -245,7 +258,7 @@ final class DashboardViewController: NSViewController {
     private static func detailLabel() -> NSTextField {
         let label = NSTextField(labelWithString: "")
         label.font = .monospacedDigitSystemFont(ofSize: 12, weight: .regular)
-        label.textColor = .secondaryLabelColor
+        label.textColor = BlackThunder.detailText
         label.lineBreakMode = .byWordWrapping
         label.maximumNumberOfLines = 0
         return label

@@ -77,6 +77,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         dashboard.onQuit = { [weak self] in self?.quit() }
         popover.behavior = .transient
         popover.contentViewController = dashboard
+        // 黒地のブラックサンダー配色に合わせ、枠・矢印もダーク外観に固定する。
+        popover.appearance = NSAppearance(named: .darkAqua)
 
         buildSettingsMenu()
 
