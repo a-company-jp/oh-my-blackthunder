@@ -142,6 +142,9 @@ final class DashboardViewController: NSViewController {
         )
         sparkline.values = snap.cpuHistory
 
+        // ブラさんくんを CPU 使用率に合わせて「るんるんジャンプ」させる。
+        todayCard.setCPUUsage(cpu.total)
+
         let mem = snap.memory
         memTitle.stringValue = String(format: "メモリ: %.1f%%", mem.usage * 100)
         memDetail.stringValue = String(
