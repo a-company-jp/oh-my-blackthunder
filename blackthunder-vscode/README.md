@@ -33,24 +33,32 @@
 | `blackthunder.enableSound` | `true` | 効果音を鳴らすか |
 | `blackthunder.saveRewardCooldownSeconds` | `60` | 保存ご褒美の連発を防ぐクールダウン秒数 |
 
-## 開発・実行方法
+## インストール方法
 
-```bash
-npm install
-npm run watch        # 別ターミナルで watch ビルド
-```
+マーケットプレイス未公開のため、`.vsix` をビルドして手動インストールします。
 
-VSCode でこのフォルダを開き、`F5`（Run Extension）で拡張機能ホストを起動して動作確認できます。
+1. 依存をインストールし、`.vsix` をパッケージ化します。
 
-### パッケージ化（.vsix の作成）
+   ```bash
+   npm install
+   npm install -g @vscode/vsce
+   vsce package          # blackthunder-vscode-*.vsix を生成
+   ```
 
-```bash
-npm install -g @vscode/vsce
-vsce package
-```
+2. VSCode に取り込みます。コマンドラインなら:
 
-> `package.json` の `publisher` を自分の Publisher ID に書き換えてからパッケージ化してください。
+   ```bash
+   code --install-extension blackthunder-vscode-*.vsix
+   ```
+
+   GUI なら、拡張機能ビュー右上の `...` →「VSIX からのインストール...」で `.vsix` を選びます。
+
+3. アクティビティバーの ⚡ アイコンからサイドバーを開けます。動作は上記「設定」で調整できます。
+
+> パッケージ化前に `package.json` の `publisher` を自分の Publisher ID に書き換えてください。
 > マーケットプレイスのアイコン `media/icon.png` は仮のものなので、必要に応じて差し替えてください。
+
+開発時のビルド・実行方法は [CONTRIBUTING.md](./CONTRIBUTING.md) を参照してください。
 
 ## ライセンス
 

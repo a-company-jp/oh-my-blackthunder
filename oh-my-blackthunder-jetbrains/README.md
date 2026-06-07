@@ -21,44 +21,23 @@ IntelliJ IDEA / PyCharm / WebStorm など IntelliJ Platform ベースの IDE で
 - テスト全グリーン: +10 pt
 - **30 pt = ブラックサンダー 1 個分**（1個30円にちなんで）
 
-## 開発・実行
+## インストール方法
 
-JDK 17 以上が必要です。Gradle Wrapper 同梱なので Gradle 本体のインストールは不要です。
+ビルド済みのプラグイン zip を、お使いの JetBrains IDE に手動インストールします。
 
-```bash
-# サンドボックス IDE を起動してプラグインを試す
-./gradlew runIde
+1. プラグイン zip をビルドします（JDK 17 以上が必要。Gradle Wrapper 同梱なので
+   Gradle 本体のインストールは不要です）。
 
-# プラグイン zip をビルド（build/distributions/ に出力）
-./gradlew buildPlugin
+   ```bash
+   ./gradlew buildPlugin   # build/distributions/*.zip に出力
+   ```
 
-# plugin.xml / 互換性の検証
-./gradlew verifyPlugin
-```
+2. IDE で `Settings → Plugins → ⚙（歯車）→ Install Plugin from Disk...` を開き、
+   生成された `build/distributions/*.zip` を選びます。
+3. IDE を再起動すると有効になります。`Settings → Appearance & Behavior →
+   Appearance → Theme` から「Black Thunder」テーマを選べます。
 
-ビルドした `build/distributions/*.zip` は
-`Settings → Plugins → ⚙ → Install Plugin from Disk...` から手動インストールできます。
-
-## レイアウト
-
-```text
-oh-my-blackthunder-jetbrains/
-├── build.gradle.kts           # IntelliJ Platform Gradle Plugin 2.x
-├── settings.gradle.kts
-├── gradle.properties          # プラグイン座標・対象プラットフォーム
-├── gradlew / gradlew.bat
-└── src/main/
-    ├── kotlin/com/yurakuseika/blackthunder/
-    │   ├── core/              # 色・名言・統計・通知ヘルパー
-    │   ├── listeners/         # 保存／ビルド／テストの監視
-    │   ├── startup/           # 起動時の応援
-    │   ├── actions/           # 手動の応援アクション
-    │   └── toolwindow/        # がんばりカウンター UI
-    └── resources/
-        ├── META-INF/plugin.xml
-        ├── theme/             # UI テーマ + エディタ配色
-        └── icons/             # ツールウィンドウアイコン
-```
+開発時の実行・検証方法は [CONTRIBUTING.md](./CONTRIBUTING.md) を参照してください。
 
 ## ライセンス
 

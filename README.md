@@ -1,48 +1,40 @@
-# Black Thunder Monorepo
+# Black Thunder Monorepo ⚡🍫
 
-A collection of apps and tools built around the **Black Thunder Style** —
-inspired by the popular Japanese chocolate bar from
-[有楽製菓株式会社（ユーラク）](https://www.yurakuseika.co.jp).
+**ブラックサンダースタイル**でまとめた、アプリ・ツールのコレクションです。
+[有楽製菓株式会社（ユーラク）](https://www.yurakuseika.co.jp) の人気チョコバー
+「ブラックサンダー」にインスパイアされています。
 
-This repository is a monorepo: each app lives in its own top-level
-directory with its own README, runtime, and `.gitignore`. Shared
-repository concerns (CI, issue/PR templates, dev container, editor
-config) live at the root.
+> ※ 非公式のファン作品です。「ブラックサンダー」は有楽製菓株式会社の商品・商標です。
 
-## Apps
+このリポジトリは monorepo です。各アプリはトップレベルのディレクトリに、それぞれの
+README・ランタイム・`.gitignore` を持って配置されています。CI / Issue・PR テンプレート /
+dev container / エディタ設定など、リポジトリ全体に関わる設定はルートに置いています。
 
-| App | Description |
+## アプリ一覧
+
+| アプリ | 概要 |
 |---|---|
-| [`oh-my-blackthunder/`](./oh-my-blackthunder/) | A tiny zsh framework (themes, plugins, games, AI usage meters) inspired by Oh My Zsh. See its [README](./oh-my-blackthunder/README.md). |
-| [`oh-my-blackthunder-jetbrains/`](./oh-my-blackthunder-jetbrains/) | A JetBrains / IntelliJ Platform plugin (Kotlin): reward notifications, an effort counter ("how many Black Thunder bars"), random cheers, a black/yellow/red dark UI theme, and a crunch sound on save. See its [README](./oh-my-blackthunder-jetbrains/README.md). |
-| [`blackthunder-chrome/`](./blackthunder-chrome/) | **ThunderCaptcha** — a Chrome (MV3) extension that gates GitHub PR merges behind a Black Thunder "snack verification" captcha, then rains Black Thunders. See its [README](./blackthunder-chrome/README.md). |
+| [`oh-my-blackthunder/`](./oh-my-blackthunder/) | Oh My Zsh ライクな小さな **zsh フレームワーク**。テーマ・ミニゲームに加え、**Claude / Codex** の使用量をブラックサンダーの本数で計測します。→ [README](./oh-my-blackthunder/README.md) |
+| [`oh-my-blackthunder-jetbrains/`](./oh-my-blackthunder-jetbrains/) | **JetBrains / IntelliJ Platform プラグイン**（Kotlin）。ご褒美通知・がんばりカウンター・ランダム応援・黒×黄×赤のダーク UI テーマ・保存時のザクザク音。→ [README](./oh-my-blackthunder-jetbrains/README.md) |
+| [`blackthunder-chrome/`](./blackthunder-chrome/) | **ThunderCaptcha** — GitHub PR の Merge をブラックサンダー摂取認証で挟む **Chrome 拡張**（MV3）。認証するとブラックサンダーが降ります。→ [README](./blackthunder-chrome/README.md) |
+| [`blackthunder-vscode/`](./blackthunder-vscode/) | 保存・テスト成功でご褒美をくれる **VS Code 拡張**。ガチャ・ステータスバーのカウント・週間グラフ付き。→ [README](./blackthunder-vscode/README.md) |
+| [`RunThunder/`](./RunThunder/) | 走るブラックサンダーがメニューバーで動く **macOS メニューバーアプリ**（RunCat 風）。システムダッシュボードと Claude 使用量を本数表示。→ [README](./RunThunder/README.md) |
+| [`blackthunder-battery/`](./blackthunder-battery/) | バッテリー残量を板チョコで表示する **macOS メニューバー ガジェット**。減るとチョコが食べられていきます。→ [README](./blackthunder-battery/README.md) |
+| [`web/`](./web/) | ランディング + リーダーボードの **Web アプリ**（Next.js）。AIザクザク度 / ブラックサンダーカウントのランキングとチーム機能。→ [README](./web/README.md) |
 
-> More apps will be added as sibling directories at the repository root.
+## 新しいアプリを追加するには
 
-## Repository Layout
+1. トップレベルに新しいディレクトリ（例: `my-app/`）を作成します。
+2. 専用の `README.md` を用意し、ローカル実行で生成物が出る場合は専用の `.gitignore`
+   も置きます（パターンはそのフォルダに限定。例: `/cache/*`）。
+3. クローン / 単体利用ができるよう、アプリは自己完結させます。
 
-```text
-.
-├── .devcontainer/       # Shared development container settings (repo-wide)
-├── .github/             # Issue / PR templates and workflows (repo-wide)
-├── .editorconfig        # Shared editor config (repo-wide)
-├── .gitignore           # Repo-wide ignores (OS, compiled, bytecode)
-└── oh-my-blackthunder/  # App: zsh framework (self-contained, own .gitignore)
-```
-
-## Adding a new app
-
-1. Create a new top-level directory, e.g. `my-app/`.
-2. Give it its own `README.md` and, if it produces local runtime output,
-   its own `.gitignore` (anchor patterns to that folder, e.g. `/cache/*`).
-3. Keep the app self-contained so it can be cloned/used independently.
-
-## Style
+## スタイル
 
 - Thunder Yellow: RGB(255,211,0)
 - Thunder Red: RGB(230,0,18)
 - Normal White: #FFFFFF
 
-## License
+## ライセンス
 
-See [LICENSE.txt](./LICENSE.txt).
+[LICENSE.txt](./LICENSE.txt) を参照してください。
