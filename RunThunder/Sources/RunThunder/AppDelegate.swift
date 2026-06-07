@@ -77,6 +77,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         dashboard.onQuit = { [weak self] in self?.quit() }
         popover.behavior = .transient
         popover.contentViewController = dashboard
+        // 黒地のブラックサンダー配色に合わせ、枠・矢印もダーク外観に固定する。
+        popover.appearance = NSAppearance(named: .darkAqua)
 
         buildSettingsMenu()
 
@@ -120,6 +122,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         _ = dashboard.view   // アクセスで loadView を走らせ、batteryRow 等を生成（macOS 13 互換）
+        dashboard.shuffleTodayBar()   // 開くたびにバー画像をランダムに
         dashboard.update(snapshot)
         dashboard.updatePreferredSize()
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)

@@ -47,6 +47,12 @@ else
   echo "    no frame images found — placeholder frames will be used at runtime"
 fi
 
+# Resources 直下の画像（背景・バー単体など）をバンドルへコピー。
+if compgen -G "./Resources/*.png" > /dev/null; then
+  cp ./Resources/*.png "$RES_DIR/"
+  echo "    copied resource images"
+fi
+
 # アプリアイコン: Resources/AppIcon.png (正方形, 1024x1024 推奨) から .icns を生成して
 # バンドルへ入れる（Finder / Launchpad / About で表示。メニューバーは別途 Frames）。
 ICON_SRC="./Resources/AppIcon.png"
