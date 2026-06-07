@@ -19,8 +19,9 @@
 #   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
 #   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
 #   NEXT_PUBLIC_FIREBASE_APP_ID
-#   NEXT_PUBLIC_GITHUB_OAUTH_CLIENT_ID
-#   GITHUB_OAUTH_CLIENT_ID                  server-side copy of the OAuth client id
+#   NEXT_PUBLIC_GITHUB_OAUTH_CLIENT_ID      (also reused as the server-side
+#       GITHUB_OAUTH_CLIENT_ID env var — GitHub reserves the GITHUB_ prefix for
+#       variable names, so it cannot be its own Actions variable)
 #
 # The server secret GITHUB_OAUTH_CLIENT_SECRET is NOT here: it is stored in
 # Secret Manager (secret name GITHUB_OAUTH_CLIENT_SECRET) and mounted into the
@@ -113,7 +114,7 @@ jobs:
           env_vars: |
             NODE_ENV=production
             GOOGLE_CLOUD_PROJECT=${{ vars.GCP_PROJECT_ID }}
-            GITHUB_OAUTH_CLIENT_ID=${{ vars.GITHUB_OAUTH_CLIENT_ID }}
+            GITHUB_OAUTH_CLIENT_ID=${{ vars.NEXT_PUBLIC_GITHUB_OAUTH_CLIENT_ID }}
           secrets: |
             GITHUB_OAUTH_CLIENT_SECRET=GITHUB_OAUTH_CLIENT_SECRET:latest
 
