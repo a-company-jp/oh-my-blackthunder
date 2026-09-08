@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:oh-my-blackthunder}/RunThunder",
+            "name": "Debug RunThunder (RunThunder)",
+            "target": "RunThunder",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug RunThunder (RunThunder)"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:oh-my-blackthunder}/RunThunder",
+            "name": "Release RunThunder (RunThunder)",
+            "target": "RunThunder",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release RunThunder (RunThunder)"
+        }
+    ]
+}
