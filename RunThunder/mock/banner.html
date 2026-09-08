@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RunThunder ⚡️ レジェンドカード（モック）</title>
+<style>
+  /* ===== ブランド色 ===== */
+  :root {
+    --thunder-yellow: #ffd300;
+    --thunder-red: #e60012;
+    --ink: #0a0a0c;
+    --panel: #16161a;
+
+    /* ティア色（JS で差し替え）。既定はゴールド */
+    --tier: #ffcf3f;
+    --tier-dark: #b8860b;
+    --tier-glow: rgba(255, 207, 63, 0.55);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue",
+      "Hiragino Sans", "Yu Gothic UI", sans-serif;
+    color: #fff;
+    background:
+      radial-gradient(1200px 700px at 70% -10%, #1d1d24 0%, var(--ink) 60%),
+      var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .stage {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 48px 16px 80px;
+  }
+
+  /* ===== レジェンドカード本体 ===== */
+  .card {
+    position: relative;
+    width: 320px;
+    /* Apex の縦長カード比率に寄せる */
+    aspect-ratio: 5 / 8;
+    border-radius: 4px;
+    overflow: hidden;
+    /* 斜めにカットされた角（Apex らしさ） */
+    clip-path: polygon(
+      0 22px, 22px 0,
+      100% 0,
+      100% calc(100% - 22px), calc(100% - 22px) 100%,
+      0 100%
+    );
+    background: #000;
+    box-shadow:
+      0 0 0 2px var(--tier),
+      0 0 28px var(--tier-glow),
+      0 30px 60px rgba(0, 0, 0, 0.6);
+    transition: box-shadow 0.35s ease;
+  }
+
+  /* メタリックなフレーム（内側の細い縁） */
+  .card::after {
+    content: "";
+    position: absolute;
+    inset: 6px;
+    border-radius: 2px;
+    pointer-events: none;
+    background:
+      linear-gradient(135deg,
+        rgba(255, 255, 255, 0.35) 0%,
+        rgba(255, 255, 255, 0) 18%,
+        rgba(255, 255, 255, 0) 82%,
+        rgba(255, 255, 255, 0.18) 100%);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+    clip-path: polygon(
+      0 16px, 16px 0,
+      100% 0,
+      100% calc(100% - 16px), calc(100% - 16px) 100%,
+      0 100%
+    );
+  }
+
+  /* キャラ画像（全面背景） */
+  .art {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(to bottom,
+        rgba(0, 0, 0, 0.05) 0%,
+        rgba(0, 0, 0, 0.15) 42%,
+        rgba(0, 0, 0, 0.85) 78%,
+        rgba(0, 0, 0, 0.96) 100%),
+      radial-gradient(120% 80% at 50% 18%, rgba(255,211,0,0.18), transparent 55%),
+      var(--art-src, none);
+    background-size: cover, cover, cover;
+    background-position: center, center, center 28%;
+    background-repeat: no-repeat;
+  }
+  /* 画像が無い環境向けのフォールバック地（雷ストライプ） */
+  .art.no-img {
+    background:
+      linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.96)),
+      repeating-linear-gradient(115deg, #1a1a1f 0 22px, #111 22px 44px);
+  }
+
+  /* ===== カード上部：ティアエンブレム + レベル ===== */
+  .top {
+    position: absolute;
+    top: 16px; left: 0; right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    z-index: 3;
+  }
+
+  .rank-badge {
+    text-align: center;
+    filter: drop-shadow(0 0 10px var(--tier-glow));
+  }
+  .rank-emblem {
+    width: 64px; height: 64px;
+    display: grid; place-items: center;
+    font-size: 30px;
+    color: var(--ink);
+    background:
+      radial-gradient(circle at 35% 28%, #fff8, transparent 45%),
+      linear-gradient(160deg, var(--tier), var(--tier-dark));
+    /* 六角形 */
+    clip-path: polygon(50% 0, 95% 25%, 95% 75%, 50% 100%, 5% 75%, 5% 25%);
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,0.35);
+  }
+  .rank-name {
+    margin-top: 4px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--tier);
+  }
+
+  .level {
+    text-align: center;
+    background: rgba(0,0,0,0.55);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 3px;
+    padding: 6px 10px;
+    backdrop-filter: blur(2px);
+  }
+  .level .num {
+    font-size: 22px; font-weight: 900; line-height: 1;
+    color: var(--thunder-yellow);
+  }
+  .level .lbl {
+    font-size: 9px; letter-spacing: 0.12em; opacity: 0.75;
+    text-transform: uppercase;
+  }
+
+  /* 順位バッジ（任意） */
+  .rank-pos {
+    position: absolute;
+    top: 92px; right: 16px;
+    z-index: 3;
+    font-weight: 900;
+    font-size: 15px;
+    color: var(--ink);
+    background: linear-gradient(160deg, #fff, #d9d9d9);
+    padding: 4px 10px;
+    clip-path: polygon(12% 0, 100% 0, 88% 100%, 0 100%);
+    box-shadow: 0 0 14px rgba(255,255,255,0.4);
+  }
+  .rank-pos.hidden { display: none; }
+
+  /* ===== カード下部：GitHub アイデンティティ ===== */
+  .identity {
+    position: absolute;
+    left: 0; right: 0; bottom: 18px;
+    padding: 0 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 3;
+  }
+  .avatar {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--tier);
+    box-shadow: 0 0 14px var(--tier-glow);
+    background: #222;
+    flex: 0 0 auto;
+  }
+  .who { min-width: 0; }
+  .username {
+    font-size: 20px; font-weight: 900; line-height: 1.1;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .title-tag {
+    margin-top: 3px;
+    display: inline-block;
+    font-size: 10px; font-weight: 800;
+    letter-spacing: 0.1em;
+    color: var(--ink);
+    background: var(--thunder-yellow);
+    padding: 2px 8px;
+    clip-path: polygon(8% 0, 100% 0, 92% 100%, 0 100%);
+  }
+
+  /* ===== トラッカー（カード下の横一列） ===== */
+  .trackers {
+    width: 320px;
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .tracker {
+    background: linear-gradient(180deg, var(--panel), #0e0e11);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-top: 2px solid var(--tier);
+    padding: 12px 8px 10px;
+    text-align: center;
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
+  }
+  .tracker .ic { font-size: 18px; line-height: 1; }
+  .tracker .val {
+    margin-top: 6px;
+    font-size: 22px; font-weight: 900; line-height: 1;
+    color: #fff;
+  }
+  .tracker .cap {
+    margin-top: 4px;
+    font-size: 9px; letter-spacing: 0.08em;
+    text-transform: uppercase; opacity: 0.7;
+  }
+
+  .footnote {
+    width: 320px;
+    margin-top: 14px;
+    font-size: 11px;
+    opacity: 0.45;
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  /* ===== プレビュー用コントロール（本実装では削除） ===== */
+  .controls {
+    position: fixed;
+    top: 16px; left: 16px;
+    width: 240px;
+    background: rgba(20,20,24,0.92);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 14px;
+    backdrop-filter: blur(6px);
+    font-size: 12px;
+    z-index: 10;
+  }
+  .controls h2 {
+    font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--thunder-yellow); margin-bottom: 10px;
+  }
+  .controls label {
+    display: block; margin-bottom: 9px; opacity: 0.85;
+  }
+  .controls input, .controls select {
+    width: 100%; margin-top: 3px;
+    background: #0c0c0e; color: #fff;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 4px; padding: 5px 7px; font-size: 12px;
+  }
+  .controls .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .controls .chk { display: flex; align-items: center; gap: 6px; }
+  .controls .chk input { width: auto; margin-top: 0; }
+  .controls small { opacity: 0.5; display: block; margin-top: 4px; line-height: 1.4; }
+</style>
+</head>
+<body>
+  <!-- プレビュー操作パネル（モック専用） -->
+  <aside class="controls">
+    <h2>⚡ Preview</h2>
+    <label>ユーザー名
+      <input id="c-name" type="text" value="KoueiAmano" />
+    </label>
+    <label>アバター URL（GitHub avatar_url 想定）
+      <input id="c-avatar" type="text" value="https://avatars.githubusercontent.com/u/9919?v=4" />
+    </label>
+    <label>ティア
+      <select id="c-tier">
+        <option value="bronze">ブロンズ</option>
+        <option value="silver">シルバー</option>
+        <option value="gold" selected>ゴールド</option>
+        <option value="platinum">プラチナ</option>
+        <option value="diamond">ダイヤ</option>
+        <option value="master">マスター</option>
+        <option value="thunder">サンダー（最高）</option>
+      </select>
+    </label>
+    <div class="row2">
+      <label>累計🍫
+        <input id="c-total" type="number" value="1280" />
+      </label>
+      <label>レベル
+        <input id="c-level" type="number" value="47" />
+      </label>
+    </div>
+    <div class="row2">
+      <label>連続日数
+        <input id="c-streak" type="number" value="23" />
+      </label>
+      <label>1日最高🍫
+        <input id="c-best" type="number" value="38" />
+      </label>
+    </div>
+    <label class="chk">
+      <input id="c-pos-on" type="checkbox" checked /> 順位バッジを表示
+    </label>
+    <label>順位
+      <input id="c-pos" type="number" value="1" />
+    </label>
+    <small>これはデザイン確認用。本実装では OAuth の実データを流し込み、このパネルは削除します。</small>
+  </aside>
+
+  <main class="stage">
+    <div>
+      <!-- レジェンドカード -->
+      <section class="card" id="card">
+        <div class="art" id="art"></div>
+
+        <div class="top">
+          <div class="rank-badge">
+            <div class="rank-emblem" id="emblem">⚡</div>
+            <div class="rank-name" id="tier-name">GOLD</div>
+          </div>
+          <div class="level">
+            <div class="num" id="level-num">47</div>
+            <div class="lbl">Level</div>
+          </div>
+        </div>
+
+        <div class="rank-pos" id="rank-pos">#1</div>
+
+        <div class="identity">
+          <img class="avatar" id="avatar" alt="avatar" />
+          <div class="who">
+            <div class="username" id="username">KoueiAmano</div>
+            <span class="title-tag" id="title-tag">ザクザク勢</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3 スタットトラッカー -->
+      <div class="trackers">
+        <div class="tracker">
+          <div class="ic">🍫</div>
+          <div class="val" id="t-total">1,280</div>
+          <div class="cap">累計サンダー</div>
+        </div>
+        <div class="tracker">
+          <div class="ic">🔥</div>
+          <div class="val" id="t-streak">23</div>
+          <div class="cap">連続稼働日</div>
+        </div>
+        <div class="tracker">
+          <div class="ic">⚡</div>
+          <div class="val" id="t-best">38</div>
+          <div class="cap">1日最高</div>
+        </div>
+      </div>
+
+      <p class="footnote">RunThunder ⚡️ — 累計サンダー = Claude トークン ÷ 90,000<br>※ デザインモック / データはダミー</p>
+    </div>
+  </main>
+
+<script>
+  // ===== ティア定義（色・称号・絵文字） =====
+  const TIERS = {
+    bronze:   { color: "#cd7f32", dark: "#7a4a1e", name: "BRONZE",   emblem: "🥉", title: "かじり始め" },
+    silver:   { color: "#cdd3da", dark: "#7d848b", name: "SILVER",   emblem: "🥈", title: "ザクザク見習い" },
+    gold:     { color: "#ffcf3f", dark: "#b8860b", name: "GOLD",     emblem: "⚡", title: "ザクザク勢" },
+    platinum: { color: "#5fe3c8", dark: "#1f8e7a", name: "PLATINUM", emblem: "💠", title: "イナズマ級" },
+    diamond:  { color: "#6fb6ff", dark: "#2a6fc0", name: "DIAMOND",  emblem: "💎", title: "雷神見習い" },
+    master:   { color: "#c77bff", dark: "#7a2fb8", name: "MASTER",   emblem: "👑", title: "雷神" },
+    thunder:  { color: "#ffd300", dark: "#e60012", name: "THUNDER",  emblem: "🌩️", title: "黒い天使" },
+  };
+
+  // 画像パス：mock/ から見た既存フレーム画像
+  const ART_SRC = "../Resources/Frames/frame_00.png";
+
+  const $ = (id) => document.getElementById(id);
+  const fmt = (n) => Number(n || 0).toLocaleString("ja-JP");
+
+  function applyArt() {
+    const art = $("art");
+    // 画像が読めるか確認してフォールバック
+    const img = new Image();
+    img.onload = () => {
+      art.classList.remove("no-img");
+      art.style.setProperty("--art-src", `url("${ART_SRC}")`);
+    };
+    img.onerror = () => art.classList.add("no-img");
+    img.src = ART_SRC;
+  }
+
+  function render() {
+    const tierKey = $("c-tier").value;
+    const t = TIERS[tierKey];
+
+    // ティア色をルート変数へ
+    const root = document.documentElement.style;
+    root.setProperty("--tier", t.color);
+    root.setProperty("--tier-dark", t.dark);
+    root.setProperty("--tier-glow", hexToGlow(t.color));
+
+    $("emblem").textContent = t.emblem;
+    $("tier-name").textContent = t.name;
+    $("title-tag").textContent = t.title;
+
+    // アイデンティティ
+    $("username").textContent = $("c-name").value || "anonymous";
+    $("avatar").src = $("c-avatar").value;
+
+    // レベル・トラッカー
+    $("level-num").textContent = $("c-level").value || "1";
+    $("t-total").textContent = fmt($("c-total").value);
+    $("t-streak").textContent = fmt($("c-streak").value);
+    $("t-best").textContent = fmt($("c-best").value);
+
+    // 順位バッジ
+    const pos = $("rank-pos");
+    if ($("c-pos-on").checked) {
+      pos.classList.remove("hidden");
+      pos.textContent = "#" + ($("c-pos").value || "1");
+    } else {
+      pos.classList.add("hidden");
+    }
+  }
+
+  function hexToGlow(hex) {
+    const h = hex.replace("#", "");
+    const r = parseInt(h.substring(0, 2), 16);
+    const g = parseInt(h.substring(2, 4), 16);
+    const b = parseInt(h.substring(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, 0.55)`;
+  }
+
+  // アバター読み込み失敗時はイニシャルっぽいプレースホルダ
+  $("avatar").addEventListener("error", function () {
+    this.src =
+      "data:image/svg+xml;utf8," +
+      encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="52" height="52">' +
+        '<rect width="52" height="52" fill="#333"/>' +
+        '<text x="50%" y="56%" font-size="26" fill="#ffd300" text-anchor="middle" font-family="sans-serif">⚡</text></svg>'
+      );
+  });
+
+  // すべての入力でライブ更新
+  document.querySelectorAll(".controls input, .controls select")
+    .forEach((el) => el.addEventListener("input", render));
+
+  applyArt();
+  render();
+</script>
+</body>
+</html>
